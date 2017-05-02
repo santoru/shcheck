@@ -13,6 +13,7 @@ I think there is a lot to improve, and I will be grateful if somebody wants to h
 Usage: python ./shcheck.py <target>
 ```
 ### Expected output:
+<p align="center">
 ![Shcheck on facebook](screenshot.png)
-
+</p>
 No options, at the moment :)
