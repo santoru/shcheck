@@ -14,6 +14,6 @@ Usage: python ./shcheck.py <target>
 ```
 ### Expected output:
 <p align="center">
-![Shcheck on facebook](screenshot.png)
+<img src="screenshot.png" alt="Output on Facebook" />
 </p>
 No options, at the moment :)
