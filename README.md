@@ -21,4 +21,4 @@ Options:
 <p align="center">
 <img src="screenshot.png" alt="Output on Facebook" />
 </p>
-No options, at the moment :)
+

@@ -143,6 +143,7 @@ def main(argv):
     rUrl = response.geturl()
 
     print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
+    print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
     parse_headers(response.info().headers)
 
     for safeh in sec_headers:
