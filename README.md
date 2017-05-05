@@ -10,7 +10,12 @@ It just check headers and print a report about which are enabled and which not
 I think there is a lot to improve, and I will be grateful if somebody wants to help :)
 
 ```
-Usage: python ./shcheck.py <target>
+Usage: shcheck.py [options] <target>
+
+Options:
+  -h, --help            show this help message and exit
+  -p PORT, --port=PORT  Set a custom port to connect to
+  -i, --information     Display present information headers
 ```
 ### Expected output:
 <p align="center">
