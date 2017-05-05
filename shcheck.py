@@ -93,7 +93,9 @@ def check_target(target):
         pass
 
     try:
-        response = urllib2.urlopen(target, timeout=10)
+        request = urllib2.Request(target)
+        request.get_method = lambda: 'HEAD'
+        response = urllib2.urlopen(request, timeout=10)
     except ValueError:
         print "Unknown url type"
         sys.exit(5)
@@ -120,7 +122,6 @@ def report(target, safe, unsafe):
 
 
 def main(argv):
-
     if len(argv) < 2:
         parser.print_help()
         sys.exit(1)
