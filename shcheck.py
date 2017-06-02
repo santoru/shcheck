@@ -3,11 +3,18 @@
 import urllib2
 import socket
 import sys
+import ssl
 from optparse import OptionParser
 
 parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
+
 parser.add_option("-p", "--port", dest="port",
                   help="Set a custom port to connect to", metavar="PORT")
+
+parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
+                  default=False, help="Disable SSL/TLS certificate validation",
+                  action="store_true")
+
 parser.add_option("-i", "--information", dest="information", default=False,
                   help="Display present information headers",
                   action="store_true")
@@ -81,9 +88,10 @@ def append_port(target, port):
     return target + ':' + port + '/'
 
 
-def check_target(target):
+def check_target(target, ssldisabled):
     '''
-    Just put a protocol to a valid IP and check if connection works
+    Just put a protocol to a valid IP and check if connection works,
+    returning HEAD response
     '''
 
     try:
@@ -95,12 +103,24 @@ def check_target(target):
     try:
         request = urllib2.Request(target)
         request.get_method = lambda: 'HEAD'
-        response = urllib2.urlopen(request, timeout=10)
+
+        if ssldisabled:
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            response = urllib2.urlopen(request, timeout=10, context=context)
+        else:
+            response = urllib2.urlopen(request, timeout=10)
+
     except ValueError:
         print "Unknown url type"
         sys.exit(5)
-    except urllib2.URLError:
-        print "Target host seems to be unreachable"
+    except urllib2.URLError, e:
+        if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
+            print "SSL: Certificate validation error.\nIf you want to \
+ignore it run the program with the \"-d\" option."
+        else:
+            print "Target host seems to be unreachable"
         sys.exit(4)
     return response
 
@@ -129,6 +149,7 @@ def main(argv):
     # Getting options
     port = options.port
     information = options.information
+    ssldisabled = options.ssldisabled
 
     banner()
     target = argv[1]
@@ -139,7 +160,7 @@ def main(argv):
         target = append_port(target, port)
 
     # Check if target is valid
-    response = check_target(target)
+    response = check_target(target, ssldisabled)
     rUrl = response.geturl()
 
     print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
