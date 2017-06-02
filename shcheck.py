@@ -30,7 +30,7 @@ sec_headers = {
     'X-XSS-Protection': 'warning',
     'X-Frame-Options': 'warning',
     'X-Content-Type-Options': 'warning',
-    'Strict-Transport-Security': 'alert',
+    'Strict-Transport-Security': 'error',
     'Public-Key-Pins': 'none',
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
