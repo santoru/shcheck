@@ -15,6 +15,10 @@ parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
                   default=False, help="Disable SSL/TLS certificate validation",
                   action="store_true")
 
+parser.add_option('-g', "--use-get-method", dest="useget",
+                  default=False, help="Use GET method instead HEAD method",
+                  action="store_true")
+
 parser.add_option("-i", "--information", dest="information", default=False,
                   help="Display present information headers",
                   action="store_true")
@@ -88,7 +92,7 @@ def append_port(target, port):
     return target + ':' + port + '/'
 
 
-def check_target(target, ssldisabled):
+def check_target(target, ssldisabled, useget):
     '''
     Just put a protocol to a valid IP and check if connection works,
     returning HEAD response
@@ -101,8 +105,13 @@ def check_target(target, ssldisabled):
         pass
 
     try:
+        if useget:
+            method = 'GET'
+        else:
+            method = 'HEAD'
+
         request = urllib2.Request(target)
-        request.get_method = lambda: 'HEAD'
+        request.get_method = lambda: method
 
         if ssldisabled:
             context = ssl.create_default_context()
@@ -150,6 +159,7 @@ def main(argv):
     port = options.port
     information = options.information
     ssldisabled = options.ssldisabled
+    useget = options.useget
 
     banner()
     target = argv[1]
@@ -160,7 +170,7 @@ def main(argv):
         target = append_port(target, port)
 
     # Check if target is valid
-    response = check_target(target, ssldisabled)
+    response = check_target(target, ssldisabled, useget)
     rUrl = response.geturl()
 
     print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
