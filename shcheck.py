@@ -85,6 +85,13 @@ def check_target(target):
     '''
     Just put a protocol to a valid IP and check if connection works
     '''
+    myHeaders={
+        'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:53.0) Gecko/20100101 Firefox/53.0',
+        'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language':'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+        'Accept-Encoding':'gzip, deflate, br',
+        'Upgrade-Insecure-Requests':1
+    }
 
     try:
         if (socket.inet_aton(target)):
@@ -93,8 +100,8 @@ def check_target(target):
         pass
 
     try:
-        request = urllib2.Request(target)
-        request.get_method = lambda: 'HEAD'
+        request = urllib2.Request(target,headers=myHeaders)
+        request.get_method = lambda: 'GET'
         response = urllib2.urlopen(request, timeout=10)
     except ValueError:
         print "Unknown url type"
