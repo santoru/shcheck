@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # shcheck - Security Headers checks!
 # Copyright (C) 2017  m3liot
 #
@@ -14,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#!/usr/bin/env python
 
 import urllib2
 import socket
