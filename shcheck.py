@@ -85,7 +85,7 @@ headers = {}
 def banner():
     print
     print "======================================================="
-    print " > shcheck.py by @m3liot..............................."
+    print " > shcheck.py - m3liot................................."
     print "-------------------------------------------------------"
     print " Simple tool to check security headers on a webserver "
     print "======================================================="
