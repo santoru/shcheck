@@ -10,14 +10,16 @@ It just check headers and print a report about which are enabled and which not
 I think there is a lot to improve, and I will be grateful if somebody wants to help :)
 
 ```
-Usage: ./shcheck.py [options] <target>
-
 Options:
   -h, --help            show this help message and exit
   -p PORT, --port=PORT  Set a custom port to connect to
+  -c COOKIE_STRING, --cookie=COOKIE_STRING
+                        Set cookies for the request
   -d, --disable-ssl-check
                         Disable SSL/TLS certificate validation
-  -i, --information     Display present information headers
+  -g, --use-get-method  Use GET method instead HEAD method
+  -i, --information     Display information headers
+  -x, --caching         Display caching headers
 ```
 ### Expected output:
 <p align="center">
