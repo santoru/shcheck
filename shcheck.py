@@ -254,7 +254,7 @@ header {} is present! (Value: {})".format(
         if not chk:
             print "[*] No information disclosure headers detected"
 
-    report(target, safe, unsafe)
+    report(rUrl, safe, unsafe)
 
 
 if __name__ == "__main__":
