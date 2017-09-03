@@ -28,6 +28,9 @@ parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
 parser.add_option("-p", "--port", dest="port",
                   help="Set a custom port to connect to", metavar="PORT")
 
+parser.add_option("-c", "--cookie", dest="cookie",
+                  help="Set cookies for the request", metavar="COOKIE_STRING")
+
 parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
                   default=False, help="Disable SSL/TLS certificate validation",
                   action="store_true")
@@ -55,8 +58,10 @@ class bcolors:
 
 # Client headers to send to the server during the request.
 client_headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:53.0) Gecko/20100101 Firefox/53.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:53.0)\
+Gecko/20100101 Firefox/53.0',
+    'Accept': 'text/html,application/xhtml+xml,\
+application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US;q=0.8,en;q=0.3',
     'Upgrade-Insecure-Requests': 1
  }
@@ -183,6 +188,7 @@ def main(argv):
 
     # Getting options
     port = options.port
+    cookie = options.cookie
     information = options.information
     ssldisabled = options.ssldisabled
     useget = options.useget
@@ -192,8 +198,13 @@ def main(argv):
     safe = 0
     unsafe = 0
 
+    # Set a custom port if provided
     if port is not None:
         target = append_port(target, port)
+
+    # Set cookies for the request
+    if cookie is not None:
+        client_headers.update({'Cookie': cookie})
 
     # Check if target is valid
     response = check_target(target, ssldisabled, useget)
