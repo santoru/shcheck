@@ -40,8 +40,13 @@ parser.add_option('-g', "--use-get-method", dest="useget",
                   action="store_true")
 
 parser.add_option("-i", "--information", dest="information", default=False,
-                  help="Display present information headers",
+                  help="Display information headers",
                   action="store_true")
+
+parser.add_option("-x", "--caching", dest="cache_control", default=False,
+                  help="Display caching headers",
+                  action="store_true")
+
 (options, args) = parser.parse_args()
 
 
@@ -84,6 +89,15 @@ information_headers = {
     'X-Powered-By',
     'Server'
 }
+
+cache_headers = {
+    'Cache-Control',
+    'Pragma',
+    'Last-Modified'
+    'Expires',
+    'ETag'
+}
+
 headers = {}
 
 
@@ -192,6 +206,7 @@ def main(argv):
     information = options.information
     ssldisabled = options.ssldisabled
     useget = options.useget
+    cache_control = options.cache_control
 
     banner()
     target = argv[1]
@@ -242,17 +257,30 @@ def main(argv):
                 colorize(safeh, sec_headers.get(safeh)))
 
     if information:
-        chk = False
+        i_chk = False
         print
         for infoh in information_headers:
             if infoh in headers:
-                chk = True
+                i_chk = True
                 print "[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
                         colorize(infoh, 'warning'),
                         headers.get(infoh))
-        if not chk:
+        if not i_chk:
             print "[*] No information disclosure headers detected"
+
+    if cache_control:
+        c_chk = False
+        print
+        for cacheh in cache_headers:
+            if cacheh in headers:
+                c_chk = True
+                print "[!] Cache control header {} is present! \
+(Value: {})".format(
+                        colorize(cacheh, 'info'),
+                        headers.get(cacheh))
+        if not c_chk:
+            print "[*] No caching headers detected"
 
     report(rUrl, safe, unsafe)
 
