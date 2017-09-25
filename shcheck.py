@@ -142,6 +142,7 @@ def check_target(target, ssldisabled, useget):
     Just put a protocol to a valid IP and check if connection works,
     returning HEAD response
     '''
+    response = None
 
     try:
         if (socket.inet_aton(target)):
@@ -150,6 +151,7 @@ def check_target(target, ssldisabled, useget):
         pass
 
     try:
+
         if useget:
             method = 'GET'
         else:
@@ -169,6 +171,10 @@ def check_target(target, ssldisabled, useget):
     except ValueError:
         print "Unknown url type"
         sys.exit(5)
+    except urllib2.HTTPError as e:
+        print "[!] URL Returned an HTTP error: {}".format(
+            colorize(str(e.code), 'error'))
+        response = e
     except urllib2.URLError, e:
         if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
             print "SSL: Certificate validation error.\nIf you want to \
@@ -176,7 +182,11 @@ ignore it run the program with the \"-d\" option."
         else:
             print "Target host seems to be unreachable"
         sys.exit(4)
-    return response
+
+    if response is not None:
+        return response
+    print "Couldn't read a response from server."
+    sys.exit(3)
 
 
 def check_https(target):
