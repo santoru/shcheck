@@ -23,31 +23,32 @@ import sys
 import ssl
 from optparse import OptionParser
 
-parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
-
-parser.add_option("-p", "--port", dest="port",
-                  help="Set a custom port to connect to", metavar="PORT")
-
-parser.add_option("-c", "--cookie", dest="cookie",
-                  help="Set cookies for the request", metavar="COOKIE_STRING")
-
-parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
-                  default=False, help="Disable SSL/TLS certificate validation",
-                  action="store_true")
-
-parser.add_option('-g', "--use-get-method", dest="useget",
-                  default=False, help="Use GET method instead HEAD method",
-                  action="store_true")
-
-parser.add_option("-i", "--information", dest="information", default=False,
-                  help="Display information headers",
-                  action="store_true")
-
-parser.add_option("-x", "--caching", dest="cache_control", default=False,
-                  help="Display caching headers",
-                  action="store_true")
-
-(options, args) = parser.parse_args()
+def parse_opt():
+    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
+    
+    parser.add_option("-p", "--port", dest="port",
+                      help="Set a custom port to connect to", metavar="PORT")
+    
+    parser.add_option("-c", "--cookie", dest="cookie",
+                      help="Set cookies for the request", metavar="COOKIE_STRING")
+    
+    parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
+                      default=False, help="Disable SSL/TLS certificate validation",
+                      action="store_true")
+    
+    parser.add_option('-g', "--use-get-method", dest="useget",
+                      default=False, help="Use GET method instead HEAD method",
+                      action="store_true")
+    
+    parser.add_option("-i", "--information", dest="information", default=False,
+                      help="Display information headers",
+                      action="store_true")
+    
+    parser.add_option("-x", "--caching", dest="cache_control", default=False,
+                      help="Display caching headers",
+                      action="store_true")
+    
+    return parser.parse_args()
 
 
 class bcolors:
@@ -205,11 +206,7 @@ def report(target, safe, unsafe):
     print
 
 
-def main(argv):
-    if len(argv) < 2:
-        parser.print_help()
-        sys.exit(1)
-
+def main(options, args):
     # Getting options
     port = options.port
     cookie = options.cookie
@@ -219,7 +216,7 @@ def main(argv):
     cache_control = options.cache_control
 
     banner()
-    targets = argv[1:]
+    targets = args                                                                 
     safe = 0
     unsafe = 0
 
@@ -297,4 +294,11 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    if len(sys.argv) < 2:
+        parser.print_help()
+        sys.exit(1)
+
+    (options, args) = parse_opt()
+    print options
+    print args
+    main(options, args)
