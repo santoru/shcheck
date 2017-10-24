@@ -219,7 +219,7 @@ def main(argv):
     cache_control = options.cache_control
 
     banner()
-    target = argv[1]
+    targets = argv[1:]
     safe = 0
     unsafe = 0
 
@@ -231,68 +231,69 @@ def main(argv):
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
 
-    # Check if target is valid
-    response = check_target(target, ssldisabled, useget)
-    rUrl = response.geturl()
+    for target in targets:
+        # Check if target is valid
+        response = check_target(target, ssldisabled, useget)
+        rUrl = response.geturl()
 
-    print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
-    print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
-    parse_headers(response.info().headers)
+        print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
+        print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
+        parse_headers(response.info().headers)
 
-    for safeh in sec_headers:
-        if safeh in headers:
-            safe += 1
+        for safeh in sec_headers:
+            if safeh in headers:
+                safe += 1
 
-            # Taking care of special headers that could have bad values
+                # Taking care of special headers that could have bad values
 
-            # X-XSS-Protection Should be enabled
-            if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
-                print "[*] Header {} is present! (Value: {})".format(
-                        colorize(safeh, 'ok'),
-                        colorize(headers.get(safeh), 'warning'))
+                # X-XSS-Protection Should be enabled
+                if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
+                    print "[*] Header {} is present! (Value: {})".format(
+                            colorize(safeh, 'ok'),
+                            colorize(headers.get(safeh), 'warning'))
 
-            # Printing generic message if not specified above
+                # Printing generic message if not specified above
+                else:
+                    print "[*] Header {} is present! (Value: {})".format(
+                            colorize(safeh, 'ok'),
+                            headers.get(safeh))
             else:
-                print "[*] Header {} is present! (Value: {})".format(
-                        colorize(safeh, 'ok'),
-                        headers.get(safeh))
-        else:
-            unsafe += 1
+                unsafe += 1
 
-            # HSTS works obviously only on HTTPS
-            if safeh == 'Strict-Transport-Security' and not check_https(rUrl):
-                unsafe -= 1
-                continue
-            print '[!] Missing security header: {}'.format(
-                colorize(safeh, sec_headers.get(safeh)))
+                # HSTS works obviously only on HTTPS
+                if safeh == 'Strict-Transport-Security' and not check_https(rUrl):
+                    unsafe -= 1
+                    continue
+                print '[!] Missing security header: {}'.format(
+                    colorize(safeh, sec_headers.get(safeh)))
 
-    if information:
-        i_chk = False
-        print
-        for infoh in information_headers:
-            if infoh in headers:
-                i_chk = True
-                print "[!] Possible information disclosure: \
-header {} is present! (Value: {})".format(
-                        colorize(infoh, 'warning'),
-                        headers.get(infoh))
-        if not i_chk:
-            print "[*] No information disclosure headers detected"
+        if information:
+            i_chk = False
+            print
+            for infoh in information_headers:
+                if infoh in headers:
+                    i_chk = True
+                    print "[!] Possible information disclosure: \
+head    er {} is present! (Value: {})".format(
+                            colorize(infoh, 'warning'),
+                            headers.get(infoh))
+            if not i_chk:
+                print "[*] No information disclosure headers detected"
 
-    if cache_control:
-        c_chk = False
-        print
-        for cacheh in cache_headers:
-            if cacheh in headers:
-                c_chk = True
-                print "[!] Cache control header {} is present! \
-(Value: {})".format(
-                        colorize(cacheh, 'info'),
-                        headers.get(cacheh))
-        if not c_chk:
-            print "[*] No caching headers detected"
+        if cache_control:
+            c_chk = False
+            print
+            for cacheh in cache_headers:
+                if cacheh in headers:
+                    c_chk = True
+                    print "[!] Cache control header {} is present! \
+(Val    ue: {})".format(
+                            colorize(cacheh, 'info'),
+                            headers.get(cacheh))
+            if not c_chk:
+                print "[*] No caching headers detected"
 
-    report(rUrl, safe, unsafe)
+        report(rUrl, safe, unsafe)
 
 
 if __name__ == "__main__":
