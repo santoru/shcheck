@@ -23,34 +23,6 @@ import sys
 import ssl
 from optparse import OptionParser
 
-def parse_opt():
-    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
-    
-    parser.add_option("-p", "--port", dest="port",
-                      help="Set a custom port to connect to", metavar="PORT")
-    
-    parser.add_option("-c", "--cookie", dest="cookie",
-                      help="Set cookies for the request", metavar="COOKIE_STRING")
-    
-    parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
-                      default=False, help="Disable SSL/TLS certificate validation",
-                      action="store_true")
-    
-    parser.add_option('-g', "--use-get-method", dest="useget",
-                      default=False, help="Use GET method instead HEAD method",
-                      action="store_true")
-    
-    parser.add_option("-i", "--information", dest="information", default=False,
-                      help="Display information headers",
-                      action="store_true")
-    
-    parser.add_option("-x", "--caching", dest="cache_control", default=False,
-                      help="Display caching headers",
-                      action="store_true")
-    
-    return parser.parse_args()
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -217,8 +189,6 @@ def main(options, args):
 
     banner()
     targets = args                                                                 
-    safe = 0
-    unsafe = 0
 
     # Set a custom port if provided
     if port is not None:
@@ -229,6 +199,9 @@ def main(options, args):
         client_headers.update({'Cookie': cookie})
 
     for target in targets:
+        safe = 0
+        unsafe = 0
+
         # Check if target is valid
         response = check_target(target, ssldisabled, useget)
         rUrl = response.geturl()
@@ -271,7 +244,7 @@ def main(options, args):
                 if infoh in headers:
                     i_chk = True
                     print "[!] Possible information disclosure: \
-                            header {} is present! (Value: {})".format(
+header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
                             headers.get(infoh))
             if not i_chk:
@@ -284,7 +257,7 @@ def main(options, args):
                 if cacheh in headers:
                     c_chk = True
                     print "[!] Cache control header {} is present! \
-                            Value: {})".format(
+Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(cacheh))
             if not c_chk:
@@ -294,11 +267,29 @@ def main(options, args):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+
+    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
+
+    parser.add_option("-p", "--port", dest="port",
+                      help="Set a custom port to connect to", metavar="PORT")
+    parser.add_option("-c", "--cookie", dest="cookie",
+                      help="Set cookies for the request", metavar="COOKIE_STRING")
+    parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
+                      default=False, help="Disable SSL/TLS certificate validation",
+                      action="store_true")
+    parser.add_option('-g', "--use-get-method", dest="useget",
+                      default=False, help="Use GET method instead HEAD method",
+                      action="store_true")
+    parser.add_option("-i", "--information", dest="information", default=False,
+                      help="Display information headers",
+                      action="store_true")
+    parser.add_option("-x", "--caching", dest="cache_control", default=False,
+                      help="Display caching headers",
+                      action="store_true")
+    
+    (options, args) = parser.parse_args()
+
+    if len(args) < 1:
         parser.print_help()
         sys.exit(1)
-
-    (options, args) = parse_opt()
-    print options
-    print args
     main(options, args)
