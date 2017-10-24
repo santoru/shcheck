@@ -274,7 +274,7 @@ def main(argv):
                 if infoh in headers:
                     i_chk = True
                     print "[!] Possible information disclosure: \
-head    er {} is present! (Value: {})".format(
+                            header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
                             headers.get(infoh))
             if not i_chk:
@@ -287,7 +287,7 @@ head    er {} is present! (Value: {})".format(
                 if cacheh in headers:
                     c_chk = True
                     print "[!] Cache control header {} is present! \
-(Val    ue: {})".format(
+                            Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(cacheh))
             if not c_chk:
