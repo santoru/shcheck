@@ -23,33 +23,6 @@ import sys
 import ssl
 from optparse import OptionParser
 
-parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
-
-parser.add_option("-p", "--port", dest="port",
-                  help="Set a custom port to connect to", metavar="PORT")
-
-parser.add_option("-c", "--cookie", dest="cookie",
-                  help="Set cookies for the request", metavar="COOKIE_STRING")
-
-parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
-                  default=False, help="Disable SSL/TLS certificate validation",
-                  action="store_true")
-
-parser.add_option('-g', "--use-get-method", dest="useget",
-                  default=False, help="Use GET method instead HEAD method",
-                  action="store_true")
-
-parser.add_option("-i", "--information", dest="information", default=False,
-                  help="Display information headers",
-                  action="store_true")
-
-parser.add_option("-x", "--caching", dest="cache_control", default=False,
-                  help="Display caching headers",
-                  action="store_true")
-
-(options, args) = parser.parse_args()
-
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -205,11 +178,7 @@ def report(target, safe, unsafe):
     print
 
 
-def main(argv):
-    if len(argv) < 2:
-        parser.print_help()
-        sys.exit(1)
-
+def main(options, args):
     # Getting options
     port = options.port
     cookie = options.cookie
@@ -219,9 +188,7 @@ def main(argv):
     cache_control = options.cache_control
 
     banner()
-    target = argv[1]
-    safe = 0
-    unsafe = 0
+    targets = args                                                                 
 
     # Set a custom port if provided
     if port is not None:
@@ -231,69 +198,98 @@ def main(argv):
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
 
-    # Check if target is valid
-    response = check_target(target, ssldisabled, useget)
-    rUrl = response.geturl()
+    for target in targets:
+        safe = 0
+        unsafe = 0
 
-    print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
-    print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
-    parse_headers(response.info().headers)
+        # Check if target is valid
+        response = check_target(target, ssldisabled, useget)
+        rUrl = response.geturl()
 
-    for safeh in sec_headers:
-        if safeh in headers:
-            safe += 1
+        print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
+        print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
+        parse_headers(response.info().headers)
 
-            # Taking care of special headers that could have bad values
+        for safeh in sec_headers:
+            if safeh in headers:
+                safe += 1
 
-            # X-XSS-Protection Should be enabled
-            if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
-                print "[*] Header {} is present! (Value: {})".format(
-                        colorize(safeh, 'ok'),
-                        colorize(headers.get(safeh), 'warning'))
+                # Taking care of special headers that could have bad values
 
-            # Printing generic message if not specified above
+                # X-XSS-Protection Should be enabled
+                if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
+                    print "[*] Header {} is present! (Value: {})".format(
+                            colorize(safeh, 'ok'),
+                            colorize(headers.get(safeh), 'warning'))
+
+                # Printing generic message if not specified above
+                else:
+                    print "[*] Header {} is present! (Value: {})".format(
+                            colorize(safeh, 'ok'),
+                            headers.get(safeh))
             else:
-                print "[*] Header {} is present! (Value: {})".format(
-                        colorize(safeh, 'ok'),
-                        headers.get(safeh))
-        else:
-            unsafe += 1
+                unsafe += 1
 
-            # HSTS works obviously only on HTTPS
-            if safeh == 'Strict-Transport-Security' and not check_https(rUrl):
-                unsafe -= 1
-                continue
-            print '[!] Missing security header: {}'.format(
-                colorize(safeh, sec_headers.get(safeh)))
+                # HSTS works obviously only on HTTPS
+                if safeh == 'Strict-Transport-Security' and not check_https(rUrl):
+                    unsafe -= 1
+                    continue
+                print '[!] Missing security header: {}'.format(
+                    colorize(safeh, sec_headers.get(safeh)))
 
-    if information:
-        i_chk = False
-        print
-        for infoh in information_headers:
-            if infoh in headers:
-                i_chk = True
-                print "[!] Possible information disclosure: \
+        if information:
+            i_chk = False
+            print
+            for infoh in information_headers:
+                if infoh in headers:
+                    i_chk = True
+                    print "[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
-                        colorize(infoh, 'warning'),
-                        headers.get(infoh))
-        if not i_chk:
-            print "[*] No information disclosure headers detected"
+                            colorize(infoh, 'warning'),
+                            headers.get(infoh))
+            if not i_chk:
+                print "[*] No information disclosure headers detected"
 
-    if cache_control:
-        c_chk = False
-        print
-        for cacheh in cache_headers:
-            if cacheh in headers:
-                c_chk = True
-                print "[!] Cache control header {} is present! \
-(Value: {})".format(
-                        colorize(cacheh, 'info'),
-                        headers.get(cacheh))
-        if not c_chk:
-            print "[*] No caching headers detected"
+        if cache_control:
+            c_chk = False
+            print
+            for cacheh in cache_headers:
+                if cacheh in headers:
+                    c_chk = True
+                    print "[!] Cache control header {} is present! \
+Value: {})".format(
+                            colorize(cacheh, 'info'),
+                            headers.get(cacheh))
+            if not c_chk:
+                print "[*] No caching headers detected"
 
-    report(rUrl, safe, unsafe)
+        report(rUrl, safe, unsafe)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+
+    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
+
+    parser.add_option("-p", "--port", dest="port",
+                      help="Set a custom port to connect to", metavar="PORT")
+    parser.add_option("-c", "--cookie", dest="cookie",
+                      help="Set cookies for the request", metavar="COOKIE_STRING")
+    parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
+                      default=False, help="Disable SSL/TLS certificate validation",
+                      action="store_true")
+    parser.add_option('-g', "--use-get-method", dest="useget",
+                      default=False, help="Use GET method instead HEAD method",
+                      action="store_true")
+    parser.add_option("-i", "--information", dest="information", default=False,
+                      help="Display information headers",
+                      action="store_true")
+    parser.add_option("-x", "--caching", dest="cache_control", default=False,
+                      help="Display caching headers",
+                      action="store_true")
+    
+    (options, args) = parser.parse_args()
+
+    if len(args) < 1:
+        parser.print_help()
+        sys.exit(1)
+    main(options, args)
