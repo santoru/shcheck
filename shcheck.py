@@ -192,7 +192,8 @@ def main(options, args):
 
     # Set a custom port if provided
     if port is not None:
-        target = append_port(target, port)
+        for target in targets:
+			target = append_port(target, port)
 
     # Set cookies for the request
     if cookie is not None:
