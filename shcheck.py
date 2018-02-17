@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 # shcheck - Security Headers checks!
 # Copyright (C) 2017  meliot

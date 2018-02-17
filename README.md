@@ -1,7 +1,7 @@
 # Security Header Check
 ## Just check security headers on a target website
 
-I did this tool to help me to check which security headers are enabled on certains websites.
+I did this tool to help me to check which security headers are enabled on certain websites.
 
 The tool is very simple and it's the result of few minutes of coding.
 
@@ -20,6 +20,7 @@ Options:
   -g, --use-get-method  Use GET method instead HEAD method
   -i, --information     Display information headers
   -x, --caching         Display caching headers
+  --proxy=PROXY_URL     Set a proxy (Ex: http://127.0.0.1:8080)
 ```
 ### Expected output:
 <p align="center">
