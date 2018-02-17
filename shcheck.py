@@ -119,6 +119,7 @@ def check_target(target, options):
 
     ssldisabled = options.ssldisabled
     useget = options.useget
+    proxy = options.proxy
     response = None
 
     try:
@@ -129,13 +130,18 @@ def check_target(target, options):
 
     try:
 
-        if useget:
-            method = 'GET'
-        else:
-            method = 'HEAD'
+        method = 'GET' if useget else 'HEAD'
 
         request = urllib2.Request(target, headers=client_headers)
         request.get_method = lambda: method
+
+        if proxy is not None:
+            proxyhnd = urllib2.ProxyHandler({
+                'http':  proxy,
+                'https': proxy
+            })
+            opener = urllib2.build_opener(proxyhnd)
+            urllib2.install_opener(opener)
 
         if ssldisabled:
             context = ssl.create_default_context()
@@ -292,6 +298,9 @@ if __name__ == "__main__":
     parser.add_option("-x", "--caching", dest="cache_control", default=False,
                       help="Display caching headers",
                       action="store_true")
+    parser.add_option("--proxy", dest="proxy",
+                      help="Set a proxy (Ex: http://127.0.0.1:8080)",
+                      metavar="PROXY_URL")
 
     (options, args) = parser.parse_args()
 
