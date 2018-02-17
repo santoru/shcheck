@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # shcheck - Security Headers checks!
-# Copyright (C) 2017  m3liot
+# Copyright (C) 2017  meliot
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ headers = {}
 def banner():
     print
     print "======================================================="
-    print " > shcheck.py - m3liot................................."
+    print " > shcheck.py - meliot................................."
     print "-------------------------------------------------------"
     print " Simple tool to check security headers on a webserver "
     print "======================================================="
