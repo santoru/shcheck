@@ -111,11 +111,14 @@ def append_port(target, port):
     return target + ':' + port + '/'
 
 
-def check_target(target, ssldisabled, useget):
+def check_target(target, options):
     '''
     Just put a protocol to a valid IP and check if connection works,
     returning HEAD response
     '''
+
+    ssldisabled = options.ssldisabled
+    useget = options.useget
     response = None
 
     try:
@@ -184,8 +187,6 @@ def main(options, args):
     port = options.port
     cookie = options.cookie
     information = options.information
-    ssldisabled = options.ssldisabled
-    useget = options.useget
     cache_control = options.cache_control
 
     banner()
@@ -205,7 +206,7 @@ def main(options, args):
         unsafe = 0
 
         # Check if target is valid
-        response = check_target(target, ssldisabled, useget)
+        response = check_target(target, options)
         rUrl = response.geturl()
 
         print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
