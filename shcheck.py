@@ -23,6 +23,7 @@ import sys
 import ssl
 from optparse import OptionParser
 
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -162,7 +163,7 @@ ignore it run the program with the \"-d\" option."
     sys.exit(3)
 
 
-def check_https(target):
+def is_https(target):
     '''
     Check if target support HTTPS for Strict-Transport-Security
     '''
@@ -188,12 +189,12 @@ def main(options, args):
     cache_control = options.cache_control
 
     banner()
-    targets = args                                                                 
+    targets = args
 
     # Set a custom port if provided
     if port is not None:
         for target in targets:
-			target = append_port(target, port)
+            target = append_port(target, port)
 
     # Set cookies for the request
     if cookie is not None:
@@ -232,7 +233,7 @@ def main(options, args):
                 unsafe += 1
 
                 # HSTS works obviously only on HTTPS
-                if safeh == 'Strict-Transport-Security' and not check_https(rUrl):
+                if safeh == 'Strict-Transport-Security' and not is_https(rUrl):
                     unsafe -= 1
                     continue
                 print '[!] Missing security header: {}'.format(
@@ -272,11 +273,14 @@ if __name__ == "__main__":
     parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
 
     parser.add_option("-p", "--port", dest="port",
-                      help="Set a custom port to connect to", metavar="PORT")
+                      help="Set a custom port to connect to",
+                      metavar="PORT")
     parser.add_option("-c", "--cookie", dest="cookie",
-                      help="Set cookies for the request", metavar="COOKIE_STRING")
+                      help="Set cookies for the request",
+                      metavar="COOKIE_STRING")
     parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
-                      default=False, help="Disable SSL/TLS certificate validation",
+                      default=False,
+                      help="Disable SSL/TLS certificate validation",
                       action="store_true")
     parser.add_option('-g', "--use-get-method", dest="useget",
                       default=False, help="Use GET method instead HEAD method",
@@ -287,7 +291,7 @@ if __name__ == "__main__":
     parser.add_option("-x", "--caching", dest="cache_control", default=False,
                       help="Display caching headers",
                       action="store_true")
-    
+
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
