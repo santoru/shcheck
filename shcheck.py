@@ -100,9 +100,9 @@ def parse_headers(hdrs):
 
 
 def append_port(target, port):
-    if target[-1:] == '/':
-        return target[:-1] + ':' + port + '/'
-    return target + ':' + port + '/'
+    return target[:-1] + ':' + port + '/' \
+        if target[-1:] == '/' \
+        else target + ':' + port + '/'
 
 
 def set_proxy(proxy):
@@ -204,7 +204,7 @@ def report(target, safe, unsafe):
     print
 
 
-def main(options, args):
+def main(options, targets):
     # Getting options
     port = options.port
     cookie = options.cookie
@@ -212,7 +212,6 @@ def main(options, args):
     cache_control = options.cache_control
 
     banner()
-    targets = args
 
     # Set a custom port if provided
     if port is not None:
