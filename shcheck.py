@@ -136,20 +136,19 @@ def normalize(target):
 
 
 def print_error(e):
-    if e == ValueError:
+    if isinstance(e, ValueError):
         print "Unknown url type"
 
-    if e == urllib2.HTTPError:
+    if isinstance(e, urllib2.HTTPError):
             print "[!] URL Returned an HTTP error: {}".format(
                 colorize(str(e.code), 'error'))
 
-    if e == urllib2.URLError:
+    if isinstance(e, urllib2.URLError):
             if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
                 print "SSL: Certificate validation error.\nIf you want to \
     ignore it run the program with the \"-d\" option."
             else:
                 print "Target host seems to be unreachable"
-    print(e)
 
 
 def check_target(target, options):
