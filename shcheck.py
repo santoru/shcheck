@@ -94,15 +94,11 @@ def colorize(string, alert):
         return bcolors.OKGREEN + string + bcolors.ENDC
     elif alert == 'info':
         return bcolors.OKBLUE + string + bcolors.ENDC
-        return string
     return string
 
 
 def parse_headers(hdrs):
-    for header in hdrs:
-        htype = header.split(':')[0].strip()
-        hvalue = header.split(':')[1].strip()
-        headers.update({htype: hvalue})
+    map(lambda header: headers.update((header.rstrip().split(':',1),)), hdrs)
 
 
 def append_port(target, port):
