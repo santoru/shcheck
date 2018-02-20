@@ -111,60 +111,83 @@ def append_port(target, port):
     return target + ':' + port + '/'
 
 
-def check_target(target, options):
-    '''
-    Just put a protocol to a valid IP and check if connection works,
-    returning HEAD response
-    '''
+def set_proxy(proxy):
+    if proxy is None:
+        return
+    proxyhnd = urllib2.ProxyHandler({
+        'http':  proxy,
+        'https': proxy
+    })
+    opener = urllib2.build_opener(proxyhnd)
+    urllib2.install_opener(opener)
 
-    ssldisabled = options.ssldisabled
-    useget = options.useget
-    proxy = options.proxy
-    response = None
 
+def get_unsafe_context():
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    return context
+
+
+def normalize(target):
     try:
         if (socket.inet_aton(target)):
             target = 'http://' + target
     except (ValueError, socket.error):
         pass
+    finally:
+        return target
+
+
+def print_error(e):
+    if e == ValueError:
+        print "Unknown url type"
+
+    if e == urllib2.HTTPError:
+            print "[!] URL Returned an HTTP error: {}".format(
+                colorize(str(e.code), 'error'))
+
+    if e == urllib2.URLError:
+            if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
+                print "SSL: Certificate validation error.\nIf you want to \
+    ignore it run the program with the \"-d\" option."
+            else:
+                print "Target host seems to be unreachable"
+    print(e)
+
+
+def check_target(target, options):
+    '''
+    Just put a protocol to a valid IP and check if connection works,
+    returning HEAD response
+    '''
+    # Recover used options
+    ssldisabled = options.ssldisabled
+    useget = options.useget
+    proxy = options.proxy
+    response = None
+
+    target = normalize(target)
 
     try:
-
-        method = 'GET' if useget else 'HEAD'
-
         request = urllib2.Request(target, headers=client_headers)
+
+        # Set method
+        method = 'GET' if useget else 'HEAD'
         request.get_method = lambda: method
 
-        if proxy is not None:
-            proxyhnd = urllib2.ProxyHandler({
-                'http':  proxy,
-                'https': proxy
-            })
-            opener = urllib2.build_opener(proxyhnd)
-            urllib2.install_opener(opener)
-
+        # Set proxy
+        set_proxy(proxy)
+        # Set certificate validation
         if ssldisabled:
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+            context = get_unsafe_context()
             response = urllib2.urlopen(request, timeout=10, context=context)
         else:
             response = urllib2.urlopen(request, timeout=10)
 
-    except ValueError:
-        print "Unknown url type"
-        sys.exit(5)
-    except urllib2.HTTPError as e:
-        print "[!] URL Returned an HTTP error: {}".format(
-            colorize(str(e.code), 'error'))
-        response = e
-    except urllib2.URLError, e:
-        if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
-            print "SSL: Certificate validation error.\nIf you want to \
-ignore it run the program with the \"-d\" option."
-        else:
-            print "Target host seems to be unreachable"
-        sys.exit(4)
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
 
     if response is not None:
         return response
