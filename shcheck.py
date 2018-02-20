@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-# shcheck - Security Headers checks!
+# shcheck - Security headers check!
 # Copyright (C) 2017  meliot
 #
 # This program is free software: you can redistribute it and/or modify
