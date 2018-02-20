@@ -86,19 +86,17 @@ def banner():
 
 
 def colorize(string, alert):
-    if alert == 'error':
-        return bcolors.FAIL + string + bcolors.ENDC
-    elif alert == 'warning':
-        return bcolors.WARNING + string + bcolors.ENDC
-    elif alert == 'ok':
-        return bcolors.OKGREEN + string + bcolors.ENDC
-    elif alert == 'info':
-        return bcolors.OKBLUE + string + bcolors.ENDC
-    return string
+    color = {
+        'error':    bcolors.FAIL + string + bcolors.ENDC,
+        'warning':  bcolors.WARNING + string + bcolors.ENDC,
+        'ok':       bcolors.OKGREEN + string + bcolors.ENDC,
+        'info':     bcolors.OKBLUE + string + bcolors.ENDC
+    }
+    return color[alert] if alert in color else string
 
 
 def parse_headers(hdrs):
-    map(lambda header: headers.update((header.rstrip().split(':',1),)), hdrs)
+    map(lambda header: headers.update((header.rstrip().split(':', 1),)), hdrs)
 
 
 def append_port(target, port):
