@@ -214,15 +214,13 @@ def main(options, targets):
     banner()
 
     # Set a custom port if provided
-    if port is not None:
-        for target in targets:
-            target = append_port(target, port)
-
-    # Set cookies for the request
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
 
     for target in targets:
+        if port is not None:
+            target = append_port(target, port)
+        
         safe = 0
         unsafe = 0
 
