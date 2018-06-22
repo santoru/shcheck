@@ -210,13 +210,17 @@ def main(options, targets):
     cookie = options.cookie
     information = options.information
     cache_control = options.cache_control
-
+    hfile = options.hfile
     banner()
 
     # Set a custom port if provided
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
-
+    
+    if hfile is not None:
+        with open(hfile) as f:
+            targets = f.read().splitlines()
+        
     for target in targets:
         if port is not None:
             target = append_port(target, port)
@@ -314,10 +318,12 @@ if __name__ == "__main__":
     parser.add_option("--proxy", dest="proxy",
                       help="Set a proxy (Ex: http://127.0.0.1:8080)",
                       metavar="PROXY_URL")
-
+    parser.add_option("--hfile", dest="hfile",
+                      help="Load a list of hosts from a flat file",
+                      metavar="PATH_TO_FILE")
     (options, args) = parser.parse_args()
 
-    if len(args) < 1:
+    if len(args) < 1 and options.hfile is None :
         parser.print_help()
         sys.exit(1)
     main(options, args)
