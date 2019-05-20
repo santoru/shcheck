@@ -208,6 +208,7 @@ def main(options, targets):
     # Getting options
     port = options.port
     cookie = options.cookie
+    headers = options.headers
     information = options.information
     cache_control = options.cache_control
     hfile = options.hfile
@@ -216,6 +217,18 @@ def main(options, targets):
     # Set a custom port if provided
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
+    
+    # Set custom headers if provided
+    if headers is not None:
+        for header in headers:
+            # Split supplied string of format 'Header: value'
+            header_split = header.split(': ')
+            # Add to existing headers using header name and header value
+            try:
+                client_headers.update({header_split[0]: header_split[1]})
+            except IndexError:
+                print "[!] Header strings must be of the format 'Header: value'"
+                raise SystemExit(1)
     
     if hfile is not None:
         with open(hfile) as f:
@@ -302,6 +315,10 @@ if __name__ == "__main__":
     parser.add_option("-c", "--cookie", dest="cookie",
                       help="Set cookies for the request",
                       metavar="COOKIE_STRING")
+    parser.add_option("-a", "--add-header", dest="headers",
+                      help="Add headers for the request e.g. 'Header: value'",
+                      metavar="HEADER_STRING",
+                      action="append")
     parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
                       default=False,
                       help="Disable SSL/TLS certificate validation",
