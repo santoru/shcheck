@@ -15,6 +15,8 @@ Options:
   -p PORT, --port=PORT  Set a custom port to connect to
   -c COOKIE_STRING, --cookie=COOKIE_STRING
                         Set cookies for the request
+  -a HEADER_STRING, --add-header=HEADER_STRING
+                        Add headers for the request e.g. 'Header: value'
   -d, --disable-ssl-check
                         Disable SSL/TLS certificate validation
   -g, --use-get-method  Use GET method instead HEAD method
