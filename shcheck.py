@@ -208,7 +208,7 @@ def main(options, targets):
     # Getting options
     port = options.port
     cookie = options.cookie
-    headers = options.headers
+    custom_headers = options.custom_headers
     information = options.information
     cache_control = options.cache_control
     hfile = options.hfile
@@ -219,8 +219,8 @@ def main(options, targets):
         client_headers.update({'Cookie': cookie})
     
     # Set custom headers if provided
-    if headers is not None:
-        for header in headers:
+    if custom_headers is not None:
+        for header in custom_headers:
             # Split supplied string of format 'Header: value'
             header_split = header.split(': ')
             # Add to existing headers using header name and header value
@@ -315,7 +315,7 @@ if __name__ == "__main__":
     parser.add_option("-c", "--cookie", dest="cookie",
                       help="Set cookies for the request",
                       metavar="COOKIE_STRING")
-    parser.add_option("-a", "--add-header", dest="headers",
+    parser.add_option("-a", "--add-header", dest="custom_headers",
                       help="Add headers for the request e.g. 'Header: value'",
                       metavar="HEADER_STRING",
                       action="append")
