@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 # shcheck - Security headers check!
 # Copyright (C) 2018  meliot
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import socket
 import sys
 import ssl
@@ -76,13 +76,13 @@ headers = {}
 
 
 def banner():
-    print
-    print "======================================================="
-    print " > shcheck.py - meliot................................."
-    print "-------------------------------------------------------"
-    print " Simple tool to check security headers on a webserver "
-    print "======================================================="
-    print
+    print()
+    print("=======================================================")
+    print(" > shcheck.py - meliot.................................")
+    print("-------------------------------------------------------")
+    print(" Simple tool to check security headers on a webserver ")
+    print("=======================================================")
+    print()
 
 
 def colorize(string, alert):
@@ -96,8 +96,8 @@ def colorize(string, alert):
 
 
 def parse_headers(hdrs):
-    map(lambda header: headers.update((header.rstrip().split(':', 1),)), hdrs)
-
+    global headers
+    headers = dict((x,y) for x,y in hdrs)
 
 def append_port(target, port):
     return target[:-1] + ':' + port + '/' \
@@ -108,13 +108,12 @@ def append_port(target, port):
 def set_proxy(proxy):
     if proxy is None:
         return
-    proxyhnd = urllib2.ProxyHandler({
+    proxyhnd = urllib.request.ProxyHandler({
         'http':  proxy,
         'https': proxy
     })
-    opener = urllib2.build_opener(proxyhnd)
-    urllib2.install_opener(opener)
-
+    opener = urllib.request.build_opener(proxyhnd)
+    urllib.request.install_opener(opener)
 
 def get_unsafe_context():
     context = ssl.create_default_context()
@@ -135,18 +134,18 @@ def normalize(target):
 
 def print_error(e):
     if isinstance(e, ValueError):
-        print "Unknown url type"
+        print("Unknown url type")
 
-    if isinstance(e, urllib2.HTTPError):
-            print "[!] URL Returned an HTTP error: {}".format(
-                colorize(str(e.code), 'error'))
+    if isinstance(e, urllib.error.HTTPError):
+            print("[!] URL Returned an HTTP error: {}".format(
+                colorize(str(e.code), 'error')))
 
-    if isinstance(e, urllib2.URLError):
+    if isinstance(e, urllib.error.URLError):
             if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
-                print "SSL: Certificate validation error.\nIf you want to \
-    ignore it run the program with the \"-d\" option."
+                print("SSL: Certificate validation error.\nIf you want to \
+    ignore it run the program with the \"-d\" option.")
             else:
-                print "Target host seems to be unreachable"
+                print("Target host seems to be unreachable")
 
 
 def check_target(target, options):
@@ -163,7 +162,7 @@ def check_target(target, options):
     target = normalize(target)
 
     try:
-        request = urllib2.Request(target, headers=client_headers)
+        request = urllib.request.Request(target, headers=client_headers)
 
         # Set method
         method = 'GET' if useget else 'HEAD'
@@ -171,12 +170,12 @@ def check_target(target, options):
 
         # Set proxy
         set_proxy(proxy)
-        # Set certificate validation
+        # Set certificate validation 
         if ssldisabled:
             context = get_unsafe_context()
-            response = urllib2.urlopen(request, timeout=10, context=context)
+            response = urllib.request.urlopen(request, timeout=10, context=context)
         else:
-            response = urllib2.urlopen(request, timeout=10)
+            response = urllib.request.urlopen(request, timeout=10)
 
     except Exception as e:
         print_error(e)
@@ -184,7 +183,7 @@ def check_target(target, options):
 
     if response is not None:
         return response
-    print "Couldn't read a response from server."
+    print("Couldn't read a response from server.")
     sys.exit(3)
 
 
@@ -196,12 +195,12 @@ def is_https(target):
 
 
 def report(target, safe, unsafe):
-    print "-------------------------------------------------------"
-    print "[!] Headers analyzed for {}".format(colorize(target, 'info'))
-    print "[+] There are {} security headers".format(colorize(str(safe), 'ok'))
-    print "[-] There are not {} security headers".format(
-        colorize(str(unsafe), 'error'))
-    print
+    print("-------------------------------------------------------")
+    print("[!] Headers analyzed for {}".format(colorize(target, 'info')))
+    print("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
+    print("[-] There are not {} security headers".format(
+        colorize(str(unsafe), 'error')))
+    print()
 
 
 def main(options, targets):
@@ -227,7 +226,7 @@ def main(options, targets):
             try:
                 client_headers.update({header_split[0]: header_split[1]})
             except IndexError:
-                print "[!] Header strings must be of the format 'Header: value'"
+                print("[!] Header strings must be of the format 'Header: value'")
                 raise SystemExit(1)
     
     if hfile is not None:
@@ -245,10 +244,9 @@ def main(options, targets):
         response = check_target(target, options)
         rUrl = response.geturl()
 
-        print "[*] Analyzing headers of {}".format(colorize(target, 'info'))
-        print "[*] Effective URL: {}".format(colorize(rUrl, 'info'))
-        parse_headers(response.info().headers)
-
+        print("[*] Analyzing headers of {}".format(colorize(target, 'info')))
+        print("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
+        parse_headers(response.getheaders())
         for safeh in sec_headers:
             if safeh in headers:
                 safe += 1
@@ -257,15 +255,15 @@ def main(options, targets):
 
                 # X-XSS-Protection Should be enabled
                 if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
-                    print "[*] Header {} is present! (Value: {})".format(
+                    print("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            colorize(headers.get(safeh), 'warning'))
+                            colorize(headers.get(safeh), 'warning')))
 
                 # Printing generic message if not specified above
                 else:
-                    print "[*] Header {} is present! (Value: {})".format(
+                    print("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            headers.get(safeh))
+                            headers.get(safeh)))
             else:
                 unsafe += 1
 
@@ -273,34 +271,34 @@ def main(options, targets):
                 if safeh == 'Strict-Transport-Security' and not is_https(rUrl):
                     unsafe -= 1
                     continue
-                print '[!] Missing security header: {}'.format(
-                    colorize(safeh, sec_headers.get(safeh)))
+                print('[!] Missing security header: {}'.format(
+                    colorize(safeh, sec_headers.get(safeh))))
 
         if information:
             i_chk = False
-            print
+            print()
             for infoh in information_headers:
                 if infoh in headers:
                     i_chk = True
-                    print "[!] Possible information disclosure: \
+                    print("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
-                            headers.get(infoh))
+                            headers.get(infoh)))
             if not i_chk:
-                print "[*] No information disclosure headers detected"
+                print("[*] No information disclosure headers detected")
 
         if cache_control:
             c_chk = False
-            print
+            print()
             for cacheh in cache_headers:
                 if cacheh in headers:
                     c_chk = True
-                    print "[!] Cache control header {} is present! \
+                    print("[!] Cache control header {} is present! \
 Value: {})".format(
                             colorize(cacheh, 'info'),
-                            headers.get(cacheh))
+                            headers.get(cacheh)))
             if not c_chk:
-                print "[*] No caching headers detected"
+                print("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
 
