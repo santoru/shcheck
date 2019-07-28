@@ -145,7 +145,7 @@ def print_error(e):
                 print("SSL: Certificate validation error.\nIf you want to \
     ignore it run the program with the \"-d\" option.")
             else:
-                print("Target host seems to be unreachable")
+                print("Target host seems to be unreachable ({})".format(e.reason))
 
 
 def check_target(target, options):
