@@ -1,0 +1,40 @@
+Metadata-Version: 2.1
+Name: post
+Version: 2019.4.13
+Summary: UNKNOWN
+Home-page: https://github.com/looking-for-a-job/post.py
+License: UNKNOWN
+Keywords: POST dict with http request variables
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
+Requires-Dist: setuptools
+
+<!--
+https://pypi.org/project/readme-generator/
+https://pypi.org/project/python-readme-generator/
+-->
+
+[![](https://img.shields.io/pypi/pyversions/post.svg?longCache=True)](https://pypi.org/project/post/)
+
+#### Installation
+```bash
+$ [sudo] pip install post
+```
+
+#### Examples
+```python
+>>> import post
+
+>>> post.POST
+{...}
+```
+
+#### Links
++   [GET](https://pypi.org/project/get/)
++   [POST](https://pypi.org/project/post/)
++   [REQUEST](https://pypi.org/project/request/)
+
+<p align="center">
+    <a href="https://pypi.org/project/python-readme-generator/">python-readme-generator</a>
+</p>
+

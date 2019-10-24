@@ -1,0 +1,41 @@
+Metadata-Version: 2.1
+Name: get
+Version: 2019.4.13
+Summary: UNKNOWN
+Home-page: https://github.com/looking-for-a-job/get.py
+License: UNKNOWN
+Keywords: GET dict with http request variables
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
+Requires-Dist: query-string
+Requires-Dist: setuptools
+
+<!--
+https://pypi.org/project/readme-generator/
+https://pypi.org/project/python-readme-generator/
+-->
+
+[![](https://img.shields.io/pypi/pyversions/get.svg?longCache=True)](https://pypi.org/project/get/)
+
+#### Installation
+```bash
+$ [sudo] pip install get
+```
+
+#### Examples
+```python
+>>> import get
+
+get.GET
+{...}
+```
+
+#### Links
++   [GET](https://pypi.org/project/get/)
++   [POST](https://pypi.org/project/post/)
++   [REQUEST](https://pypi.org/project/request/)
+
+<p align="center">
+    <a href="https://pypi.org/project/python-readme-generator/">python-readme-generator</a>
+</p>
+
