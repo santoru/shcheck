@@ -1,12 +1,10 @@
-FROM python:3
+FROM python:3.7-alpine3.10
 
-# Create a working app directory
+# Copy current directory
+COPY . /shcheck
+
+# Create working directory
 WORKDIR /shcheck
 
-# Install app dependencies
-RUN pip install request
-RUN pip install parse
-
-# Run the python file
-CMD [ "python", "shcheck.py"]
-
+# Run command
+ENTRYPOINT ["python",  "shcheck.py"]
