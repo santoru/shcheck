@@ -9,6 +9,15 @@ It just check headers and print a report about which are enabled and which not
 
 I think there is a lot to improve, and I will be grateful if somebody wants to help :)
 
+## How to run: ##
+First build your docker container using something like this: 
+
+`docker build -t shcheck .`
+
+Then simply run your docker container using something like this where you specifiy which website you want to check headers on: 
+
+`docker run -it --rm https://www.reddit.com`
+
 ```
 Options:
   -h, --help            show this help message and exit
