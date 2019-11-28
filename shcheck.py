@@ -22,6 +22,7 @@ import socket
 import sys
 import ssl
 import os
+import json
 from optparse import OptionParser
 
 
@@ -322,7 +323,8 @@ Value: {})".format(
         report(rUrl, safe, unsafe)
         if json_output:
             sys.stdout = sys.__stdout__
-            print(json_headers)
+            json_output = json.loads(str(json_headers).replace("\'", "\""))
+            print(json.dumps(json_output))
 
 if __name__ == "__main__":
 
