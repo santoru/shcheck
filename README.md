@@ -19,6 +19,8 @@ Then simply run your docker container using something like this where you specif
 `docker run -it --rm https://www.reddit.com`
 
 ```
+Usage: ./shcheck.py [options] <target>
+
 Options:
   -h, --help            show this help message and exit
   -p PORT, --port=PORT  Set a custom port to connect to
@@ -32,6 +34,7 @@ Options:
   -i, --information     Display information headers
   -x, --caching         Display caching headers
   --proxy=PROXY_URL     Set a proxy (Ex: http://127.0.0.1:8080)
+  --hfile=PATH_TO_FILE  Load a list of hosts from a flat file
 ```
 ### Expected output:
 <p align="center">
