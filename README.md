@@ -31,6 +31,7 @@ Options:
   -d, --disable-ssl-check
                         Disable SSL/TLS certificate validation
   -g, --use-get-method  Use GET method instead HEAD method
+  -j, --json-output     Print the output in JSON format
   -i, --information     Display information headers
   -x, --caching         Display caching headers
   --proxy=PROXY_URL     Set a proxy (Ex: http://127.0.0.1:8080)
