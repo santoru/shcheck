@@ -21,6 +21,7 @@ import urllib.request, urllib.error, urllib.parse
 import socket
 import sys
 import ssl
+import os
 from optparse import OptionParser
 
 
@@ -73,7 +74,7 @@ cache_headers = {
 }
 
 headers = {}
-
+json_headers = {}
 
 def banner():
     print()
@@ -133,6 +134,7 @@ def normalize(target):
 
 
 def print_error(e):
+    sys.stdout = sys.__stdout__
     if isinstance(e, ValueError):
         print("Unknown url type")
 
@@ -202,8 +204,8 @@ def report(target, safe, unsafe):
         colorize(str(unsafe), 'error')))
     print()
 
-
 def main(options, targets):
+    
     # Getting options
     port = options.port
     cookie = options.cookie
@@ -211,8 +213,14 @@ def main(options, targets):
     information = options.information
     cache_control = options.cache_control
     hfile = options.hfile
-    banner()
+    json_output = options.json_output
+    
+    # Disabling printing if json output is requested
+    if json_output:
+        global json_headers
+        sys.stdout = open(os.devnull, 'w')
 
+    banner()
     # Set a custom port if provided
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
@@ -233,6 +241,8 @@ def main(options, targets):
         with open(hfile) as f:
             targets = f.read().splitlines()
         
+
+
     for target in targets:
         if port is not None:
             target = append_port(target, port)
@@ -247,9 +257,13 @@ def main(options, targets):
         print("[*] Analyzing headers of {}".format(colorize(target, 'info')))
         print("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
+        json_headers["present"] = {}
+        json_headers["missing"] = []
+
         for safeh in sec_headers:
             if safeh in headers:
                 safe += 1
+                json_headers["present"][safeh] = headers.get(safeh)
 
                 # Taking care of special headers that could have bad values
 
@@ -266,19 +280,22 @@ def main(options, targets):
                             headers.get(safeh)))
             else:
                 unsafe += 1
-
+                json_headers["missing"].append(safeh)
                 # HSTS works obviously only on HTTPS
                 if safeh == 'Strict-Transport-Security' and not is_https(rUrl):
                     unsafe -= 1
+                    json_headers["missing"].remove(safeh)
                     continue
                 print('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
 
         if information:
+            json_headers["information_disclosure"] = {}
             i_chk = False
             print()
             for infoh in information_headers:
                 if infoh in headers:
+                    json_headers["information_disclosure"][infoh] = headers.get(ifoh)
                     i_chk = True
                     print("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
@@ -288,10 +305,12 @@ header {} is present! (Value: {})".format(
                 print("[*] No information disclosure headers detected")
 
         if cache_control:
+            json_headers["caching"] = {}
             c_chk = False
             print()
             for cacheh in cache_headers:
                 if cacheh in headers:
+                    json_headers["caching"][cacheh] = headers.get(cacheh)
                     c_chk = True
                     print("[!] Cache control header {} is present! \
 Value: {})".format(
@@ -301,7 +320,9 @@ Value: {})".format(
                 print("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
-
+        if json_output:
+            sys.stdout = sys.__stdout__
+            print(json_headers)
 
 if __name__ == "__main__":
 
@@ -323,6 +344,9 @@ if __name__ == "__main__":
                       action="store_true")
     parser.add_option('-g', "--use-get-method", dest="useget",
                       default=False, help="Use GET method instead HEAD method",
+                      action="store_true")
+    parser.add_option("-j", "--json-output", dest="json_output",
+                      default=False, help="Print the output in JSON format",
                       action="store_true")
     parser.add_option("-i", "--information", dest="information", default=False,
                       help="Display information headers",
