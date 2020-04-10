@@ -296,7 +296,7 @@ def main(options, targets):
             print()
             for infoh in information_headers:
                 if infoh in headers:
-                    json_headers["information_disclosure"][infoh] = headers.get(ifoh)
+                    json_headers["information_disclosure"][infoh] = headers.get(infoh)
                     i_chk = True
                     print("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
