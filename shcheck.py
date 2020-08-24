@@ -54,7 +54,6 @@ sec_headers = {
     'X-Frame-Options': 'warning',
     'X-Content-Type-Options': 'warning',
     'Strict-Transport-Security': 'error',
-    'Public-Key-Pins': 'none',
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
     'Referrer-Policy': 'warning'
