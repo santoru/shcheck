@@ -326,8 +326,7 @@ Value: {})".format(
         report(rUrl, safe, unsafe)
         if json_output:
             sys.stdout = sys.__stdout__
-            json_output = json.loads(str(json_headers).replace("\'", "\""))
-            print(json.dumps(json_output))
+            print(json.dumps(json_headers))
 
 if __name__ == "__main__":
 
