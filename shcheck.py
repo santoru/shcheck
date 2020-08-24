@@ -99,7 +99,7 @@ def colorize(string, alert):
 
 def parse_headers(hdrs):
     global headers
-    headers = dict((x,y) for x,y in hdrs)
+    headers = dict((x.lower(),y) for x,y in hdrs)
 
 def append_port(target, port):
     return target[:-1] + ':' + port + '/' \
@@ -262,23 +262,24 @@ def main(options, targets):
         json_headers["missing"] = []
 
         for safeh in sec_headers:
-            if safeh in headers:
+            lsafeh = safeh.lower()
+            if lsafeh in headers:
                 safe += 1
-                json_headers["present"][safeh] = headers.get(safeh)
+                json_headers["present"][safeh] = headers.get(lsafeh)
 
                 # Taking care of special headers that could have bad values
 
                 # X-XSS-Protection Should be enabled
-                if safeh == 'X-XSS-Protection' and headers.get(safeh) == '0':
+                if safeh == 'X-XSS-Protection' and headers.get(lsafeh) == '0':
                     print("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            colorize(headers.get(safeh), 'warning')))
+                            colorize(headers.get(lsafeh), 'warning')))
 
                 # Printing generic message if not specified above
                 else:
                     print("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            headers.get(safeh)))
+                            headers.get(lsafeh)))
             else:
                 unsafe += 1
                 json_headers["missing"].append(safeh)
@@ -295,13 +296,14 @@ def main(options, targets):
             i_chk = False
             print()
             for infoh in information_headers:
-                if infoh in headers:
-                    json_headers["information_disclosure"][infoh] = headers.get(infoh)
+                linfoh = infoh.lower()
+                if linfoh in headers:
+                    json_headers["information_disclosure"][infoh] = headers.get(linfoh)
                     i_chk = True
                     print("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
-                            headers.get(infoh)))
+                            headers.get(linfoh)))
             if not i_chk:
                 print("[*] No information disclosure headers detected")
 
@@ -310,13 +312,14 @@ header {} is present! (Value: {})".format(
             c_chk = False
             print()
             for cacheh in cache_headers:
-                if cacheh in headers:
-                    json_headers["caching"][cacheh] = headers.get(cacheh)
+                lcacheh = cacheh.lower()
+                if lcacheh in headers:
+                    json_headers["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
                     print("[!] Cache control header {} is present! \
 Value: {})".format(
                             colorize(cacheh, 'info'),
-                            headers.get(cacheh)))
+                            headers.get(lcacheh)))
             if not c_chk:
                 print("[*] No caching headers detected")
 
