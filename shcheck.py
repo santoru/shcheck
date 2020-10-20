@@ -56,8 +56,8 @@ sec_headers = {
     'Strict-Transport-Security': 'error',
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
-    'Referrer-Policy': 'warning'
-
+    'Referrer-Policy': 'warning',
+    'Permissions-Policy': 'warning'
 }
 
 information_headers = {
@@ -172,7 +172,7 @@ def check_target(target, options):
 
         # Set proxy
         set_proxy(proxy)
-        # Set certificate validation 
+        # Set certificate validation
         if ssldisabled:
             context = get_unsafe_context()
             response = urllib.request.urlopen(request, timeout=10, context=context)
@@ -205,7 +205,7 @@ def report(target, safe, unsafe):
     print()
 
 def main(options, targets):
-    
+
     # Getting options
     port = options.port
     cookie = options.cookie
@@ -214,7 +214,7 @@ def main(options, targets):
     cache_control = options.cache_control
     hfile = options.hfile
     json_output = options.json_output
-    
+
     # Disabling printing if json output is requested
     if json_output:
         global json_headers
@@ -224,7 +224,7 @@ def main(options, targets):
     # Set a custom port if provided
     if cookie is not None:
         client_headers.update({'Cookie': cookie})
-    
+
     # Set custom headers if provided
     if custom_headers is not None:
         for header in custom_headers:
@@ -236,17 +236,17 @@ def main(options, targets):
             except IndexError:
                 print("[!] Header strings must be of the format 'Header: value'")
                 raise SystemExit(1)
-    
+
     if hfile is not None:
         with open(hfile) as f:
             targets = f.read().splitlines()
-        
+
 
 
     for target in targets:
         if port is not None:
             target = append_port(target, port)
-        
+
         safe = 0
         unsafe = 0
 
