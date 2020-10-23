@@ -56,8 +56,8 @@ sec_headers = {
     'Strict-Transport-Security': 'error',
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
-    'Referrer-Policy': 'warning'
-
+    'Referrer-Policy': 'warning',
+    'Expect-CT': 'warning'
 }
 
 information_headers = {
