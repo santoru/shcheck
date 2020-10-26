@@ -379,7 +379,7 @@ if __name__ == "__main__":
                       metavar="PATH_TO_FILE")
     parser.add_option("--colours", dest="colours",
                       help="Set up a colour profile",
-							 default="dark")
+                      default="dark")
     parser.add_option("--colors", dest="colours",
                       help="Alias for colours for US English")
     (options, args) = parser.parse_args()
