@@ -26,7 +26,7 @@ import json
 from optparse import OptionParser
 
 
-class bcolors:
+class darkcolours:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -36,6 +36,15 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class lightcolours:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[95m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 # Client headers to send to the server during the request.
 client_headers = {
@@ -87,6 +96,11 @@ def banner():
 
 
 def colorize(string, alert):
+    bcolors=darkcolours
+    if options.colours == "light":
+        bcolors=lightcolours
+    elif options.colours == "none":
+        return string
     color = {
         'error':    bcolors.FAIL + string + bcolors.ENDC,
         'warning':  bcolors.WARNING + string + bcolors.ENDC,
@@ -363,6 +377,11 @@ if __name__ == "__main__":
     parser.add_option("--hfile", dest="hfile",
                       help="Load a list of hosts from a flat file",
                       metavar="PATH_TO_FILE")
+    parser.add_option("--colours", dest="colours",
+                      help="Set up a colour profile",
+							 default="dark")
+    parser.add_option("--colors", dest="colours",
+                      help="Alias for colours for US English")
     (options, args) = parser.parse_args()
 
     if len(args) < 1 and options.hfile is None :
