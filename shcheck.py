@@ -89,7 +89,6 @@ cache_headers = {
 }
 
 headers = {}
-json_headers = {}
 
 def banner():
     log("")
@@ -259,6 +258,7 @@ def main(options, targets):
 
     json_out=[]
     for target in targets:
+        json_headers = {}
         if port is not None:
             target = append_port(target, port)
         
