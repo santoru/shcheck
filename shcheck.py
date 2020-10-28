@@ -257,7 +257,7 @@ def main(options, targets):
             targets = f.read().splitlines()
         
 
-
+    json_out=[]
     for target in targets:
         if port is not None:
             target = append_port(target, port)
@@ -339,10 +339,11 @@ Value: {})".format(
                 log("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
-        if json_output:
-            sys.stdout = sys.__stdout__
-            print(json.dumps(json_headers))
+        json_out.append(json_headers)
 
+    if json_output:
+        sys.stdout = sys.__stdout__
+        print(json.dumps(json_out))
 if __name__ == "__main__":
 
     parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
