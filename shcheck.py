@@ -46,6 +46,12 @@ class lightcolours:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+# log - prints unless JSON output is set
+def log(string):
+    if options.json_output:
+	     return
+    print(string)
+
 # Client headers to send to the server during the request.
 client_headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:53.0)\
@@ -86,13 +92,13 @@ headers = {}
 json_headers = {}
 
 def banner():
-    print()
-    print("=======================================================")
-    print(" > shcheck.py - meliot.................................")
-    print("-------------------------------------------------------")
-    print(" Simple tool to check security headers on a webserver ")
-    print("=======================================================")
-    print()
+    log("")
+    log("=======================================================")
+    log(" > shcheck.py - meliot.................................")
+    log("-------------------------------------------------------")
+    log(" Simple tool to check security headers on a webserver ")
+    log("=======================================================")
+    log("")
 
 
 def colorize(string, alert):
@@ -211,12 +217,12 @@ def is_https(target):
 
 
 def report(target, safe, unsafe):
-    print("-------------------------------------------------------")
-    print("[!] Headers analyzed for {}".format(colorize(target, 'info')))
-    print("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
-    print("[-] There are not {} security headers".format(
+    log("-------------------------------------------------------")
+    log("[!] Headers analyzed for {}".format(colorize(target, 'info')))
+    log("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
+    log("[-] There are not {} security headers".format(
         colorize(str(unsafe), 'error')))
-    print()
+    log("")
 
 def main(options, targets):
     
@@ -229,11 +235,6 @@ def main(options, targets):
     hfile = options.hfile
     json_output = options.json_output
     
-    # Disabling printing if json output is requested
-    if json_output:
-        global json_headers
-        sys.stdout = open(os.devnull, 'w')
-
     banner()
     # Set a custom port if provided
     if cookie is not None:
@@ -268,9 +269,10 @@ def main(options, targets):
         response = check_target(target, options)
         rUrl = response.geturl()
 
-        print("[*] Analyzing headers of {}".format(colorize(target, 'info')))
-        print("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
+        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
+        log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
+        json_headers["url"] = f"{rUrl}"
         json_headers["present"] = {}
         json_headers["missing"] = []
 
@@ -284,13 +286,13 @@ def main(options, targets):
 
                 # X-XSS-Protection Should be enabled
                 if safeh == 'X-XSS-Protection' and headers.get(lsafeh) == '0':
-                    print("[*] Header {} is present! (Value: {})".format(
+                    log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             colorize(headers.get(lsafeh), 'warning')))
 
                 # Printing generic message if not specified above
                 else:
-                    print("[*] Header {} is present! (Value: {})".format(
+                    log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             headers.get(lsafeh)))
             else:
@@ -301,40 +303,40 @@ def main(options, targets):
                     unsafe -= 1
                     json_headers["missing"].remove(safeh)
                     continue
-                print('[!] Missing security header: {}'.format(
+                log('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
 
         if information:
             json_headers["information_disclosure"] = {}
             i_chk = False
-            print()
+            log("")
             for infoh in information_headers:
                 linfoh = infoh.lower()
                 if linfoh in headers:
                     json_headers["information_disclosure"][infoh] = headers.get(linfoh)
                     i_chk = True
-                    print("[!] Possible information disclosure: \
+                    log("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
                             headers.get(linfoh)))
             if not i_chk:
-                print("[*] No information disclosure headers detected")
+                log("[*] No information disclosure headers detected")
 
         if cache_control:
             json_headers["caching"] = {}
             c_chk = False
-            print()
+            log("")
             for cacheh in cache_headers:
                 lcacheh = cacheh.lower()
                 if lcacheh in headers:
                     json_headers["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
-                    print("[!] Cache control header {} is present! \
+                    log("[!] Cache control header {} is present! \
 Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(lcacheh)))
             if not c_chk:
-                print("[*] No caching headers detected")
+                log("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
         if json_output:
