@@ -26,7 +26,7 @@ import json
 from optparse import OptionParser
 
 
-class bcolors:
+class darkcolours:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -36,6 +36,21 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class lightcolours:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[95m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+# log - prints unless JSON output is set
+def log(string):
+    if options.json_output:
+	     return
+    print(string)
 
 # Client headers to send to the server during the request.
 client_headers = {
@@ -57,6 +72,7 @@ sec_headers = {
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
     'Referrer-Policy': 'warning',
+    'Expect-CT': 'warning'
     'Permissions-Policy': 'warning'
 }
 
@@ -74,19 +90,23 @@ cache_headers = {
 }
 
 headers = {}
-json_headers = {}
 
 def banner():
-    print()
-    print("=======================================================")
-    print(" > shcheck.py - meliot.................................")
-    print("-------------------------------------------------------")
-    print(" Simple tool to check security headers on a webserver ")
-    print("=======================================================")
-    print()
+    log("")
+    log("=======================================================")
+    log(" > shcheck.py - meliot.................................")
+    log("-------------------------------------------------------")
+    log(" Simple tool to check security headers on a webserver ")
+    log("=======================================================")
+    log("")
 
 
 def colorize(string, alert):
+    bcolors=darkcolours
+    if options.colours == "light":
+        bcolors=lightcolours
+    elif options.colours == "none":
+        return string
     color = {
         'error':    bcolors.FAIL + string + bcolors.ENDC,
         'warning':  bcolors.WARNING + string + bcolors.ENDC,
@@ -197,12 +217,12 @@ def is_https(target):
 
 
 def report(target, safe, unsafe):
-    print("-------------------------------------------------------")
-    print("[!] Headers analyzed for {}".format(colorize(target, 'info')))
-    print("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
-    print("[-] There are not {} security headers".format(
+    log("-------------------------------------------------------")
+    log("[!] Headers analyzed for {}".format(colorize(target, 'info')))
+    log("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
+    log("[-] There are not {} security headers".format(
         colorize(str(unsafe), 'error')))
-    print()
+    log("")
 
 def main(options, targets):
 
@@ -242,8 +262,9 @@ def main(options, targets):
             targets = f.read().splitlines()
 
 
-
+    json_out=[]
     for target in targets:
+        json_headers = {}
         if port is not None:
             target = append_port(target, port)
 
@@ -254,9 +275,10 @@ def main(options, targets):
         response = check_target(target, options)
         rUrl = response.geturl()
 
-        print("[*] Analyzing headers of {}".format(colorize(target, 'info')))
-        print("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
+        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
+        log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
+        json_headers["url"] = f"{rUrl}"
         json_headers["present"] = {}
         json_headers["missing"] = []
 
@@ -270,13 +292,13 @@ def main(options, targets):
 
                 # X-XSS-Protection Should be enabled
                 if safeh == 'X-XSS-Protection' and headers.get(lsafeh) == '0':
-                    print("[*] Header {} is present! (Value: {})".format(
+                    log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             colorize(headers.get(lsafeh), 'warning')))
 
                 # Printing generic message if not specified above
                 else:
-                    print("[*] Header {} is present! (Value: {})".format(
+                    log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             headers.get(lsafeh)))
             else:
@@ -287,46 +309,47 @@ def main(options, targets):
                     unsafe -= 1
                     json_headers["missing"].remove(safeh)
                     continue
-                print('[!] Missing security header: {}'.format(
+                log('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
 
         if information:
             json_headers["information_disclosure"] = {}
             i_chk = False
-            print()
+            log("")
             for infoh in information_headers:
                 linfoh = infoh.lower()
                 if linfoh in headers:
                     json_headers["information_disclosure"][infoh] = headers.get(linfoh)
                     i_chk = True
-                    print("[!] Possible information disclosure: \
+                    log("[!] Possible information disclosure: \
 header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
                             headers.get(linfoh)))
             if not i_chk:
-                print("[*] No information disclosure headers detected")
+                log("[*] No information disclosure headers detected")
 
         if cache_control:
             json_headers["caching"] = {}
             c_chk = False
-            print()
+            log("")
             for cacheh in cache_headers:
                 lcacheh = cacheh.lower()
                 if lcacheh in headers:
                     json_headers["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
-                    print("[!] Cache control header {} is present! \
+                    log("[!] Cache control header {} is present! \
 Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(lcacheh)))
             if not c_chk:
-                print("[*] No caching headers detected")
+                log("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
-        if json_output:
-            sys.stdout = sys.__stdout__
-            print(json.dumps(json_headers))
+        json_out.append(json_headers)
 
+    if json_output:
+        sys.stdout = sys.__stdout__
+        print(json.dumps(json_out))
 if __name__ == "__main__":
 
     parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
@@ -363,6 +386,11 @@ if __name__ == "__main__":
     parser.add_option("--hfile", dest="hfile",
                       help="Load a list of hosts from a flat file",
                       metavar="PATH_TO_FILE")
+    parser.add_option("--colours", dest="colours",
+                      help="Set up a colour profile",
+                      default="dark")
+    parser.add_option("--colors", dest="colours",
+                      help="Alias for colours for US English")
     (options, args) = parser.parse_args()
 
     if len(args) < 1 and options.hfile is None :
