@@ -72,7 +72,7 @@ sec_headers = {
     'Content-Security-Policy': 'warning',
     'X-Permitted-Cross-Domain-Policies': 'warning',
     'Referrer-Policy': 'warning',
-    'Expect-CT': 'warning'
+    'Expect-CT': 'warning',
     'Permissions-Policy': 'warning'
 }
 
