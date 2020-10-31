@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 import socket
 import sys
 import ssl
@@ -36,6 +38,7 @@ class darkcolours:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 class lightcolours:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -46,11 +49,13 @@ class lightcolours:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 # log - prints unless JSON output is set
 def log(string):
     if options.json_output:
-	     return
+        return
     print(string)
+
 
 # Client headers to send to the server during the request.
 client_headers = {
@@ -91,6 +96,7 @@ cache_headers = {
 
 headers = {}
 
+
 def banner():
     log("")
     log("=======================================================")
@@ -102,9 +108,9 @@ def banner():
 
 
 def colorize(string, alert):
-    bcolors=darkcolours
+    bcolors = darkcolours
     if options.colours == "light":
-        bcolors=lightcolours
+        bcolors = lightcolours
     elif options.colours == "none":
         return string
     color = {
@@ -118,7 +124,8 @@ def colorize(string, alert):
 
 def parse_headers(hdrs):
     global headers
-    headers = dict((x.lower(),y) for x,y in hdrs)
+    headers = dict((x.lower(), y) for x, y in hdrs)
+
 
 def append_port(target, port):
     return target[:-1] + ':' + port + '/' \
@@ -135,6 +142,7 @@ def set_proxy(proxy):
     })
     opener = urllib.request.build_opener(proxyhnd)
     urllib.request.install_opener(opener)
+
 
 def get_unsafe_context():
     context = ssl.create_default_context()
@@ -159,15 +167,15 @@ def print_error(e):
         print("Unknown url type")
 
     if isinstance(e, urllib.error.HTTPError):
-            print("[!] URL Returned an HTTP error: {}".format(
-                colorize(str(e.code), 'error')))
+        print("[!] URL Returned an HTTP error: {}".format(
+              colorize(str(e.code), 'error')))
 
     if isinstance(e, urllib.error.URLError):
-            if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
-                print("SSL: Certificate validation error.\nIf you want to \
+        if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
+            print("SSL: Certificate validation error.\nIf you want to \
     ignore it run the program with the \"-d\" option.")
-            else:
-                print("Target host seems to be unreachable ({})".format(e.reason))
+        else:
+            print("Target host seems to be unreachable ({})".format(e.reason))
 
 
 def check_target(target, options):
@@ -195,7 +203,9 @@ def check_target(target, options):
         # Set certificate validation
         if ssldisabled:
             context = get_unsafe_context()
-            response = urllib.request.urlopen(request, timeout=10, context=context)
+            response = urllib.request.urlopen(request,
+                                              timeout=10,
+                                              context=context)
         else:
             response = urllib.request.urlopen(request, timeout=10)
 
@@ -223,6 +233,7 @@ def report(target, safe, unsafe):
     log("[-] There are not {} security headers".format(
         colorize(str(unsafe), 'error')))
     log("")
+
 
 def main(options, targets):
 
@@ -254,13 +265,13 @@ def main(options, targets):
             try:
                 client_headers.update({header_split[0]: header_split[1]})
             except IndexError:
-                print("[!] Header strings must be of the format 'Header: value'")
+                s = "[!] Header strings must be of the format 'Header: value'"
+                print(s)
                 raise SystemExit(1)
 
     if hfile is not None:
         with open(hfile) as f:
             targets = f.read().splitlines()
-
 
     json_out = {}
     for target in targets:
@@ -352,6 +363,7 @@ Value: {})".format(
         sys.stdout = sys.__stdout__
         print(json.dumps(json_out))
 
+
 if __name__ == "__main__":
 
     parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
@@ -395,7 +407,7 @@ if __name__ == "__main__":
                       help="Alias for colours for US English")
     (options, args) = parser.parse_args()
 
-    if len(args) < 1 and options.hfile is None :
+    if len(args) < 1 and options.hfile is None:
         parser.print_help()
         sys.exit(1)
     main(options, args)
