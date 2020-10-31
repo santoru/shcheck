@@ -262,7 +262,7 @@ def main(options, targets):
             targets = f.read().splitlines()
 
 
-    json_out=[]
+    json_out = {}
     for target in targets:
         json_headers = {}
         if port is not None:
@@ -274,19 +274,20 @@ def main(options, targets):
         # Check if target is valid
         response = check_target(target, options)
         rUrl = response.geturl()
+        json_results = {}
 
         log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
         log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
-        json_headers["url"] = f"{rUrl}"
-        json_headers["present"] = {}
-        json_headers["missing"] = []
+        json_headers[f"{rUrl}"] = json_results
+        json_results["present"] = {}
+        json_results["missing"] = []
 
         for safeh in sec_headers:
             lsafeh = safeh.lower()
             if lsafeh in headers:
                 safe += 1
-                json_headers["present"][safeh] = headers.get(lsafeh)
+                json_results["present"][safeh] = headers.get(lsafeh)
 
                 # Taking care of special headers that could have bad values
 
@@ -303,11 +304,11 @@ def main(options, targets):
                             headers.get(lsafeh)))
             else:
                 unsafe += 1
-                json_headers["missing"].append(safeh)
+                json_results["missing"].append(safeh)
                 # HSTS works obviously only on HTTPS
                 if safeh == 'Strict-Transport-Security' and not is_https(rUrl):
                     unsafe -= 1
-                    json_headers["missing"].remove(safeh)
+                    json_results["missing"].remove(safeh)
                     continue
                 log('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
@@ -345,11 +346,12 @@ Value: {})".format(
                 log("[*] No caching headers detected")
 
         report(rUrl, safe, unsafe)
-        json_out.append(json_headers)
+        json_out.update(json_headers)
 
     if json_output:
         sys.stdout = sys.__stdout__
         print(json.dumps(json_out))
+
 if __name__ == "__main__":
 
     parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
