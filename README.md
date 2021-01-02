@@ -16,7 +16,7 @@ First build your docker container using something like this:
 
 Then simply run your docker container using something like this where you specifiy which website you want to check headers on: 
 
-`docker run -it --rm https://www.reddit.com`
+`docker run -it --rm shcheck https://www.reddit.com`
 
 ```
 Usage: ./shcheck.py [options] <target>
