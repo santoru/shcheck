@@ -78,7 +78,10 @@ sec_headers = {
     'X-Permitted-Cross-Domain-Policies': 'warning',
     'Referrer-Policy': 'warning',
     'Expect-CT': 'warning',
-    'Permissions-Policy': 'warning'
+    'Permissions-Policy': 'warning',
+    'Cross-Origin-Embedder-Policy': 'warning',
+    'Cross-Origin-Resource-Policy': 'warning',
+    'Cross-Origin-Opener-Policy': 'warning'
 }
 
 information_headers = {
