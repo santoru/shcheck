@@ -16,7 +16,7 @@ It just check headers and print a report about which are enabled and which not
 
 I think there is a lot to improve, and I will be grateful if somebody wants to help
 
-## How to run: ##
+## How to run:
 
 ### Pypi
 ```bash
@@ -39,6 +39,8 @@ git clone https://github.com/santoru/shcheck && cd shcheck
 ./shcheck.py https://insecurity.blog
 ```
 
+## Usage
+```
 Usage: ./shcheck.py [options] <target>
 
 Options:
