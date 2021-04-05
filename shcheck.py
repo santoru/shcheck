@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # shcheck - Security headers check!
-# Copyright (C) 2019  meliot
+# Copyright (C) 2019-2021  santoru
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,12 +70,12 @@ client_headers = {
 
 # Security headers that should be enabled
 sec_headers = {
-    'X-XSS-Protection': 'warning',
+    'X-XSS-Protection': 'deprecated',
     'X-Frame-Options': 'warning',
     'X-Content-Type-Options': 'warning',
     'Strict-Transport-Security': 'error',
     'Content-Security-Policy': 'warning',
-    'X-Permitted-Cross-Domain-Policies': 'warning',
+    'X-Permitted-Cross-Domain-Policies': 'deprecated',
     'Referrer-Policy': 'warning',
     'Expect-CT': 'warning',
     'Permissions-Policy': 'warning',
@@ -102,11 +102,11 @@ headers = {}
 
 def banner():
     log("")
-    log("=======================================================")
-    log(" > shcheck.py - meliot.................................")
-    log("-------------------------------------------------------")
+    log("======================================================")
+    log(" > shcheck.py - santoru ..............................")
+    log("------------------------------------------------------")
     log(" Simple tool to check security headers on a webserver ")
-    log("=======================================================")
+    log("======================================================")
     log("")
 
 
@@ -120,7 +120,8 @@ def colorize(string, alert):
         'error':    bcolors.FAIL + string + bcolors.ENDC,
         'warning':  bcolors.WARNING + string + bcolors.ENDC,
         'ok':       bcolors.OKGREEN + string + bcolors.ENDC,
-        'info':     bcolors.OKBLUE + string + bcolors.ENDC
+        'info':     bcolors.OKBLUE + string + bcolors.ENDC,
+        'deprecated': string # No color for deprecated headers or not-an-issue ones
     }
     return color[alert] if alert in color else string
 
@@ -246,6 +247,7 @@ def main(options, targets):
     custom_headers = options.custom_headers
     information = options.information
     cache_control = options.cache_control
+    show_deprecated = options.show_deprecated
     hfile = options.hfile
     json_output = options.json_output
 
@@ -324,6 +326,9 @@ def main(options, targets):
                     unsafe -= 1
                     json_results["missing"].remove(safeh)
                     continue
+                # Hide deprecated
+                if not show_deprecated and sec_headers.get(safeh) == "deprecated":
+                    continue
                 log('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
 
@@ -396,6 +401,9 @@ if __name__ == "__main__":
                       action="store_true")
     parser.add_option("-x", "--caching", dest="cache_control", default=False,
                       help="Display caching headers",
+                      action="store_true")
+    parser.add_option("-k", "--deprecated", dest="show_deprecated", default=False,
+                      help="Display deprecated headers",
                       action="store_true")
     parser.add_option("--proxy", dest="proxy",
                       help="Set a proxy (Ex: http://127.0.0.1:8080)",
