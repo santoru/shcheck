@@ -1,7 +1,9 @@
 # shcheck - Security Header Check
 
 <p align="center">
-<img src="screenshot.png" alt="Output on Facebook" />
+    <img src="screenshot.png" alt="Output on Facebook" />
+    <a href="https://pypi.org/project/shcheck/"><img alt="PyPI" src="https://img.shields.io/pypi/v/shcheck"></a>
+    <a href="#"><img alt="Updated" src="https://img.shields.io/github/last-commit/santoru/shcheck?label=updated"></a>
 </p>
 
 ## Check security headers on a target website
@@ -15,15 +17,28 @@ It just check headers and print a report about which are enabled and which not
 I think there is a lot to improve, and I will be grateful if somebody wants to help
 
 ## How to run: ##
+
+### Pypi
+```bash
+pip3 install shcheck
+shcheck.py https://insecurity.blog
+```
+
+### Docker
 First build your docker container using something like this: 
 
 `docker build -t shcheck .`
 
-Then simply run your docker container using something like this where you specifiy which website you want to check headers on: 
+Then simply run your docker container using something like this where you specify which website you want to check headers on: 
 
-`docker run -it --rm shcheck https://www.reddit.com`
+`docker run -it --rm shcheck https://insecurity.blog`
 
+### From source
+```bash
+git clone https://github.com/santoru/shcheck && cd shcheck
+./shcheck.py https://insecurity.blog
 ```
+
 Usage: ./shcheck.py [options] <target>
 
 Options:
