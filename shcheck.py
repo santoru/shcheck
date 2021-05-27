@@ -20,6 +20,7 @@
 import urllib.request
 import urllib.error
 import urllib.parse
+import http.client
 import socket
 import sys
 import ssl
@@ -137,22 +138,22 @@ def append_port(target, port):
         else target + ':' + port + '/'
 
 
-def set_proxy(proxy):
-    if proxy is None:
-        return
-    proxyhnd = urllib.request.ProxyHandler({
-        'http':  proxy,
-        'https': proxy
-    })
-    opener = urllib.request.build_opener(proxyhnd)
+def build_opener(proxy, ssldisabled):
+    proxyhnd = urllib.request.ProxyHandler()
+    sslhnd = urllib.request.HTTPSHandler()
+    if proxy:
+        proxyhnd = urllib.request.ProxyHandler({
+            'http':  proxy,
+            'https': proxy
+        })
+    if ssldisabled:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        sslhnd = urllib.request.HTTPSHandler(context = ctx)
+
+    opener = urllib.request.build_opener(proxyhnd, sslhnd)
     urllib.request.install_opener(opener)
-
-
-def get_unsafe_context():
-    context = ssl.create_default_context()
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    return context
 
 
 def normalize(target):
@@ -195,24 +196,19 @@ def check_target(target, options):
 
     target = normalize(target)
 
+    request = urllib.request.Request(target, headers=client_headers)
+    # Set method
+    method = 'GET' if useget else 'HEAD'
+    request.get_method = lambda: method
+
+    # Build opener for proxy and SSL
+    build_opener(proxy, ssldisabled)
     try:
-        request = urllib.request.Request(target, headers=client_headers)
+        response = urllib.request.urlopen(request, timeout=10)
 
-        # Set method
-        method = 'GET' if useget else 'HEAD'
-        request.get_method = lambda: method
-
-        # Set proxy
-        set_proxy(proxy)
-        # Set certificate validation
-        if ssldisabled:
-            context = get_unsafe_context()
-            response = urllib.request.urlopen(request,
-                                              timeout=10,
-                                              context=context)
-        else:
-            response = urllib.request.urlopen(request, timeout=10)
-
+    # Handling issues with HTTP/2
+    except http.client.UnknownProtocol as e:
+        print("Unknown protocol: {}. Are you using a proxy? Try disabling it".format(e))
     except Exception as e:
         print_error(e)
         sys.exit(1)
