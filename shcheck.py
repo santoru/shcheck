@@ -324,6 +324,8 @@ def main(options, targets):
                     continue
                 # Hide deprecated
                 if not show_deprecated and sec_headers.get(safeh) == "deprecated":
+                    unsafe -= 1
+                    json_results["missing"].remove(safeh)            
                     continue
                 log('[!] Missing security header: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
