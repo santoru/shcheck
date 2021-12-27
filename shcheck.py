@@ -166,7 +166,7 @@ def normalize(target):
         return target
 
 
-def print_error(e):
+def print_error(target, e):
     sys.stdout = sys.__stdout__
     if isinstance(e, ValueError):
         print("Unknown url type")
@@ -180,7 +180,7 @@ def print_error(e):
             print("SSL: Certificate validation error.\nIf you want to \
     ignore it run the program with the \"-d\" option.")
         else:
-            print("Target host seems to be unreachable ({})".format(e.reason))
+            print("Target host {} seems to be unreachable ({})".format(target, e.reason))
 
 
 def check_target(target, options):
@@ -210,13 +210,13 @@ def check_target(target, options):
     except http.client.UnknownProtocol as e:
         print("Unknown protocol: {}. Are you using a proxy? Try disabling it".format(e))
     except Exception as e:
-        print_error(e)
-        sys.exit(1)
+        print_error(target, e)
+        return None
 
     if response is not None:
         return response
     print("Couldn't read a response from server.")
-    sys.exit(3)
+    return None
 
 
 def is_https(target):
@@ -285,6 +285,8 @@ def main(options, targets):
 
         # Check if target is valid
         response = check_target(target, options)
+        if not response:
+            continue
         rUrl = response.geturl()
         json_results = {}
 
