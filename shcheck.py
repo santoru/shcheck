@@ -412,7 +412,7 @@ if __name__ == "__main__":
                       help="Load a list of hosts from a flat file",
                       metavar="PATH_TO_FILE")
     parser.add_option("--colours", dest="colours",
-                      help="Set up a colour profile",
+                      help="Set up a colour profile [dark/light/none]",
                       default="dark")
     parser.add_option("--colors", dest="colours",
                       help="Alias for colours for US English")
