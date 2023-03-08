@@ -171,17 +171,19 @@ def print_error(target, e):
     if isinstance(e, ValueError):
         print("Unknown url type")
 
-    if isinstance(e, urllib.error.HTTPError):
+    elif isinstance(e, urllib.error.HTTPError):
         print("[!] URL Returned an HTTP error: {}".format(
               colorize(str(e.code), 'error')))
 
-    if isinstance(e, urllib.error.URLError):
+    elif isinstance(e, urllib.error.URLError):
         if "CERTIFICATE_VERIFY_FAILED" in str(e.reason):
             print("SSL: Certificate validation error.\nIf you want to \
     ignore it run the program with the \"-d\" option.")
         else:
             print("Target host {} seems to be unreachable ({})".format(target, e.reason))
 
+    else:
+        print("{}".format(str(e)))
 
 def check_target(target, options):
     '''
