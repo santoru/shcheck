@@ -185,6 +185,7 @@ def print_error(target, e):
     else:
         print("{}".format(str(e)))
 
+
 def check_target(target, options):
     '''
     Just put a protocol to a valid IP and check if connection works,
@@ -212,8 +213,11 @@ def check_target(target, options):
     except http.client.UnknownProtocol as e:
         print("Unknown protocol: {}. Are you using a proxy? Try disabling it".format(e))
     except Exception as e:
-        print_error(target, e)
-        return None
+        if hasattr(e, 'code') and e.code == 404:
+            response = e
+        else:
+            print_error(target, e)
+            return None
 
     if response is not None:
         return response
