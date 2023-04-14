@@ -87,7 +87,9 @@ sec_headers = {
 
 information_headers = {
     'X-Powered-By',
-    'Server'
+    'Server',
+    'X-AspNet-Version',
+    'X-AspNetMvc-Version'
 }
 
 cache_headers = {
