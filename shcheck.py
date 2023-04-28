@@ -291,6 +291,8 @@ def main(options, targets):
         safe = 0
         unsafe = 0
 
+        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
+
         # Check if target is valid
         response = check_target(target, options)
         if not response:
@@ -298,7 +300,6 @@ def main(options, targets):
         rUrl = response.geturl()
         json_results = {}
 
-        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
         log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
         json_headers[f"{rUrl}"] = json_results
