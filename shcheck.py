@@ -215,7 +215,7 @@ def check_target(target, options):
     except http.client.UnknownProtocol as e:
         print("Unknown protocol: {}. Are you using a proxy? Try disabling it".format(e))
     except Exception as e:
-        if hasattr(e, 'code') and e.code == 404:
+        if hasattr(e, 'code') and (e.code >= 400 or e.code < 500):
             response = e
         else:
             print_error(target, e)
