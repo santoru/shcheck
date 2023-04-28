@@ -366,7 +366,7 @@ header {} is present! (Value: {})".format(
                     json_headers["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
                     log("[!] Cache control header {} is present! \
-Value: {})".format(
+(Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(lcacheh)))
             if not c_chk:
