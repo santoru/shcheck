@@ -215,10 +215,10 @@ def check_target(target, options):
     except http.client.UnknownProtocol as e:
         print("Unknown protocol: {}. Are you using a proxy? Try disabling it".format(e))
     except Exception as e:
-        if hasattr(e, 'code') and e.code == 404:
+        print_error(target, e)
+        if hasattr(e, 'code') and e.code >= 400 and e.code < 500:
             response = e
         else:
-            print_error(target, e)
             return None
 
     if response is not None:
@@ -291,6 +291,8 @@ def main(options, targets):
         safe = 0
         unsafe = 0
 
+        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
+
         # Check if target is valid
         response = check_target(target, options)
         if not response:
@@ -298,7 +300,6 @@ def main(options, targets):
         rUrl = response.geturl()
         json_results = {}
 
-        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
         log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         parse_headers(response.getheaders())
         json_headers[f"{rUrl}"] = json_results
@@ -366,7 +367,7 @@ header {} is present! (Value: {})".format(
                     json_headers["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
                     log("[!] Cache control header {} is present! \
-Value: {})".format(
+(Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(lcacheh)))
             if not c_chk:
