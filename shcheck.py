@@ -326,6 +326,12 @@ def main(options, targets):
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
 
+                # check for max-age=0 in HSTS
+                elif safeh == 'Strict-Transport-Security' and "max-age=0" in headers.get(lsafeh):
+                    log("[!] Insecure header {} is set! (Value: {})".format(
+                            colorize(safeh, 'warning'),
+                            colorize(headers.get(lsafeh), 'error')))
+
                 # Printing generic message if not specified above
                 else:
                     log("[*] Header {} is present! (Value: {})".format(
