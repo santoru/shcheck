@@ -317,19 +317,19 @@ def main():
                 # Taking care of special headers that could have bad values
 
                 # X-XSS-Protection Should be enabled
-                if safeh == 'X-XSS-Protection' and headers.get(lsafeh) == '0':
+                if safeh == 'X-XSS-Protection'.lower() and headers.get(lsafeh) == '0':
                     log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             colorize(headers.get(lsafeh), 'warning')))
 
                 # unsafe-url policy is more insecure compared to the default/unset value
-                elif safeh == 'Referrer-Policy' and headers.get(lsafeh) == 'unsafe-url':
+                elif safeh == 'Referrer-Policy'.lower() and headers.get(lsafeh) == 'unsafe-url':
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
 
                 # check for max-age=0 in HSTS
-                elif safeh == 'Strict-Transport-Security' and "max-age=0" in headers.get(lsafeh):
+                elif safeh == 'Strict-Transport-Security'.lower() and "max-age=0" in headers.get(lsafeh):
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
@@ -343,7 +343,7 @@ def main():
                 unsafe += 1
                 json_results["missing"].append(safeh)
                 # HSTS works obviously only on HTTPS
-                if safeh == 'Strict-Transport-Security' and not is_https(rUrl):
+                if safeh == 'Strict-Transport-Security'.lower() and not is_https(rUrl):
                     unsafe -= 1
                     json_results["missing"].remove(safeh)
                     continue
