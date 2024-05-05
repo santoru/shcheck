@@ -20,4 +20,4 @@ import sys
 from shcheck import shcheck
 
 if __name__ == "__main__":
-    shcheck.main(sys.argv[0])
+    shcheck.main()

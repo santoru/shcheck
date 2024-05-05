@@ -243,10 +243,10 @@ def report(target, safe, unsafe):
     log("")
 
 
-def main(args):
+def main():
     # Getting options
     global options
-    options, targets = parse_options(args)
+    options, targets = parse_options()
 
     port = options.port
     cookie = options.cookie
@@ -396,8 +396,8 @@ header {} is present! (Value: {})".format(
 
 
 
-def parse_options(args):
-    parser = OptionParser("Usage: %prog [options] <target>", prog=args)
+def parse_options():
+    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
 
     parser.add_option("-p", "--port", dest="port",
                       help="Set a custom port to connect to",
@@ -441,9 +441,9 @@ def parse_options(args):
                       help="Alias for colours for US English")
     (options, targets) = parser.parse_args()
 
-    if len(args) < 1 and options.hfile is None:
+    if len(targets) < 1 and options.hfile is None:
         parser.print_help()
-        sys.exit(1)
+        sys.exit(12)
 
     return options, targets
 
