@@ -27,8 +27,6 @@ import ssl
 import os
 import json
 from optparse import OptionParser
-from functools import reduce
-
 
 class darkcolours:
     HEADER = '\033[95m'
