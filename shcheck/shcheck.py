@@ -242,6 +242,18 @@ def report(target, safe, unsafe):
         colorize(str(unsafe), 'error')))
     log("")
 
+def parse_csp(csp):
+    unsafe_operators = ['unsafe-inline', 'unsafe-eval', 'unsafe-hashes', 'wasm-unsafe-eval', 'self']
+    log("Value:")
+    policy_directive = csp.split(";")
+    for policy in policy_directive:
+        elements = policy.lstrip().split(" ", 1)
+
+        values = elements[1].replace("*", colorize("*", 'warning')) if len(elements) > 1 else ""
+        for x in unsafe_operators:
+            values = values.replace(x, colorize(x, 'error'))
+        log("\t" + colorize(elements[0], 'info') + (": " + values if values != "" else ""))
+
 
 def main():
     # Getting options
@@ -308,6 +320,11 @@ def main():
         json_results["present"] = {}
         json_results["missing"] = []
 
+        # Before parsing, remove X-Frame-Options if there's CSP with frame-ancestors directive
+        if "frame-ancestors" in headers.get('Content-Security-Policy'.lower()).lower():
+            sec_headers.pop("X-Frame-Options")
+            headers.pop("X-Frame-Options".lower())
+
         for safeh in sec_headers:
             lsafeh = safeh.lower()
             if lsafeh in headers:
@@ -316,20 +333,26 @@ def main():
 
                 # Taking care of special headers that could have bad values
 
+                # Parse CSP headers
+                if lsafeh == 'Content-Security-Policy'.lower():
+                    log("[*] Header {} is present!".format(
+                            colorize(safeh, 'ok')))
+                    parse_csp(headers.get(lsafeh))
+
                 # X-XSS-Protection Should be enabled
-                if safeh == 'X-XSS-Protection'.lower() and headers.get(lsafeh) == '0':
+                elif lsafeh == 'X-XSS-Protection'.lower() and headers.get(lsafeh) == '0':
                     log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
                             colorize(headers.get(lsafeh), 'warning')))
 
                 # unsafe-url policy is more insecure compared to the default/unset value
-                elif safeh == 'Referrer-Policy'.lower() and headers.get(lsafeh) == 'unsafe-url':
+                elif lsafeh == 'Referrer-Policy'.lower() and headers.get(lsafeh) == 'unsafe-url':
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
 
                 # check for max-age=0 in HSTS
-                elif safeh == 'Strict-Transport-Security'.lower() and "max-age=0" in headers.get(lsafeh):
+                elif lsafeh == 'Strict-Transport-Security'.lower() and "max-age=0" in headers.get(lsafeh):
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
