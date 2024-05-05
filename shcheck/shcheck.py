@@ -471,4 +471,4 @@ def parse_options():
     return options, targets
 
 if __name__ == "__main__":
-    main(sys.argv[0])
+    main()
