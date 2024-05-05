@@ -243,9 +243,11 @@ def report(target, safe, unsafe):
     log("")
 
 
-def main(options, targets):
-
+def main(args):
     # Getting options
+    global options
+    options, targets = parse_options(args)
+
     port = options.port
     cookie = options.cookie
     custom_headers = options.custom_headers
@@ -393,9 +395,9 @@ header {} is present! (Value: {})".format(
         print(json.dumps(json_out))
 
 
-if __name__ == "__main__":
 
-    parser = OptionParser("Usage: %prog [options] <target>", prog=sys.argv[0])
+def parse_options(args):
+    parser = OptionParser("Usage: %prog [options] <target>", prog=args)
 
     parser.add_option("-p", "--port", dest="port",
                       help="Set a custom port to connect to",
@@ -437,9 +439,13 @@ if __name__ == "__main__":
                       default="dark")
     parser.add_option("--colors", dest="colours",
                       help="Alias for colours for US English")
-    (options, args) = parser.parse_args()
+    (options, targets) = parser.parse_args()
 
     if len(args) < 1 and options.hfile is None:
         parser.print_help()
         sys.exit(1)
-    main(options, args)
+
+    return options, targets
+
+if __name__ == "__main__":
+    main(sys.argv[0])
