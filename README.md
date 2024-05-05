@@ -40,6 +40,9 @@ git clone https://github.com/santoru/shcheck && cd shcheck
 ./shcheck.py https://insecurity.blog
 ```
 
+### Standalone script
+If you want to run shcheck as a standalone script, just grab the `shcheck.py` script from the `shcheck` module/folder and copy it around.
+
 ## Usage
 ```
 Usage: ./shcheck.py [options] <target>
