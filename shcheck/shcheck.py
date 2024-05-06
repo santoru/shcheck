@@ -321,7 +321,7 @@ def main():
         json_results["missing"] = []
 
         # Before parsing, remove X-Frame-Options if there's CSP with frame-ancestors directive
-        if "frame-ancestors" in headers.get('Content-Security-Policy'.lower()).lower():
+        if "Content-Security-Policy".lower() in str(headers).lower() and "frame-ancestors" in headers.get('Content-Security-Policy'.lower()).lower():
             sec_headers.pop("X-Frame-Options")
             headers.pop("X-Frame-Options".lower())
 
