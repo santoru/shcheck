@@ -20,7 +20,7 @@
 from setuptools import setup
 
 PACKAGE_NAME = "shcheck"
-VERSION = "1.6.3"
+VERSION = "1.6.4"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
