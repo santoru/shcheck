@@ -322,8 +322,8 @@ def main():
 
         # Before parsing, remove X-Frame-Options if there's CSP with frame-ancestors directive
         if "Content-Security-Policy".lower() in str(headers).lower() and "frame-ancestors" in headers.get('Content-Security-Policy'.lower()).lower():
-            sec_headers.pop("X-Frame-Options")
-            headers.pop("X-Frame-Options".lower())
+            sec_headers.pop("X-Frame-Options", None)
+            headers.pop("X-Frame-Options".lower(), None)
 
         for safeh in sec_headers:
             lsafeh = safeh.lower()
