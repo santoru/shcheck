@@ -20,7 +20,7 @@
 from setuptools import setup
 
 PACKAGE_NAME = "shcheck"
-VERSION = "1.6.6"
+VERSION = "1.6.7"
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         long_description_content_type="text/markdown",
         url="https://github.com/santoru/shcheck",
         scripts=[
-            "shcheck.py",
+            "shcheck/shcheck.py",
         ],
         python_requires='>=3'
     )
