@@ -196,6 +196,7 @@ def check_target(target):
     # Recover used options
     ssldisabled = options.ssldisabled
     useget = options.useget
+    usemethod = options.usemethod
     proxy = options.proxy
     response = None
 
@@ -203,7 +204,7 @@ def check_target(target):
 
     request = urllib.request.Request(target, headers=client_headers)
     # Set method
-    method = 'GET' if useget else 'HEAD'
+    method = "GET" if useget else usemethod
     request.get_method = lambda: method
 
     # Build opener for proxy and SSL
@@ -439,6 +440,9 @@ def parse_options():
     parser.add_option('-g', "--use-get-method", dest="useget",
                       default=False, help="Use GET method instead HEAD method",
                       action="store_true")
+    parser.add_option('-m', "--use-method", dest="usemethod", default='HEAD',
+                      choices=["HEAD", "GET", "POST", "PUT", "DELETE", "TRACE"],
+                      help="Use a specified method",)
     parser.add_option("-j", "--json-output", dest="json_output",
                       default=False, help="Print the output in JSON format",
                       action="store_true")
