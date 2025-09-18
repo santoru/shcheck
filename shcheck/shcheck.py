@@ -20,6 +20,7 @@
 import urllib.request
 import urllib.error
 import urllib.parse
+import urllib.response
 import http.client
 import socket
 import sys
@@ -140,7 +141,7 @@ def append_port(target, port):
         else target + ':' + port + '/'
 
 
-def build_opener(proxy, ssldisabled):
+def build_opener(proxy, ssldisabled, nofollow=False):
     proxyhnd = urllib.request.ProxyHandler()
     sslhnd = urllib.request.HTTPSHandler()
     if proxy:
@@ -154,7 +155,32 @@ def build_opener(proxy, ssldisabled):
         ctx.verify_mode = ssl.CERT_NONE
         sslhnd = urllib.request.HTTPSHandler(context = ctx)
 
-    opener = urllib.request.build_opener(proxyhnd, sslhnd)
+    if nofollow:
+        class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def _build_response(self, req, fp, code, headers):
+                # Create an addinfourl object instead of following the redirect
+                url = req.get_full_url()
+                resp = urllib.response.addinfourl(fp, headers, url)
+                try:
+                    resp.status = code # store HTTP status code
+                except Exception:
+                    pass
+                resp.code = code
+                return resp
+            def http_error_301(self, req, fp, code, msg, headers):
+                return self._build_response(req, fp, code, headers)
+            def http_error_302(self, req, fp, code, msg, headers):
+                return self._build_response(req, fp, code, headers)
+            def http_error_303(self, req, fp, code, msg, headers):
+                return self._build_response(req, fp, code, headers)
+            def http_error_307(self, req, fp, code, msg, headers):
+                return self._build_response(req, fp, code, headers)
+            def http_error_308(self, req, fp, code, msg, headers):
+                return self._build_response(req, fp, code, headers)
+
+        opener = urllib.request.build_opener(NoRedirectHandler(), proxyhnd, sslhnd)
+    else:
+        opener = urllib.request.build_opener(proxyhnd, sslhnd)
     urllib.request.install_opener(opener)
 
 
@@ -206,8 +232,8 @@ def check_target(target):
     method = "GET" if useget else usemethod
     request.get_method = lambda: method
 
-    # Build opener for proxy and SSL
-    build_opener(proxy, ssldisabled)
+    # Build opener for proxy and SSL (and optionally do not follow redirects)
+    build_opener(proxy, ssldisabled, options.no_follow)
     try:
         response = urllib.request.urlopen(request, timeout=10)
 
@@ -430,8 +456,7 @@ def parse_options():
                       metavar="COOKIE_STRING")
     parser.add_option("-a", "--add-header", dest="custom_headers",
                       help="Add headers for the request e.g. 'Header: value'",
-                      metavar="HEADER_STRING",
-                      action="append")
+                      metavar="HEADER_STRING", action="append")
     parser.add_option('-d', "--disable-ssl-check", dest="ssldisabled",
                       default=False,
                       help="Disable SSL/TLS certificate validation",
@@ -465,6 +490,8 @@ def parse_options():
                       default="dark")
     parser.add_option("--colors", dest="colours",
                       help="Alias for colours for US English")
+    parser.add_option("--no-follow", dest="no_follow", default=False,
+                      help="Do not follow HTTP redirects (return 3xx response)", action="store_true")
     (options, targets) = parser.parse_args()
 
     if len(targets) < 1 and options.hfile is None:
