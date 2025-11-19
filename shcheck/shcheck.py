@@ -236,9 +236,9 @@ def is_https(target):
 
 def report(target, safe, unsafe):
     log("-------------------------------------------------------")
-    log("[!] Headers analyzed for {}".format(colorize(target, 'info')))
-    log("[+] There are {} security headers".format(colorize(str(safe), 'ok')))
-    log("[-] There are not {} security headers".format(
+    log("[!] Analyzing headers for {}".format(colorize(target, 'info')))
+    log("[+] {} security header(s) present".format(colorize(str(safe), 'ok')))
+    log("[-] {} security header(s) missing".format(
         colorize(str(unsafe), 'error')))
     log("")
 
@@ -375,7 +375,7 @@ def main():
                     unsafe -= 1
                     json_results["missing"].remove(safeh)            
                     continue
-                log('[!] Missing security header: {}'.format(
+                log('[!] Security header missing: {}'.format(
                     colorize(safeh, sec_headers.get(safeh))))
 
         if information:
