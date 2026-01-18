@@ -61,6 +61,7 @@ Options:
   -i, --information     Display information headers
   -x, --caching         Display caching headers
   -k, --deprecated      Display deprecated headers
+  --no-follow           Do not follow HTTP redirects
   --proxy=PROXY_URL     Set a proxy (Ex: http://127.0.0.1:8080)
   --hfile=PATH_TO_FILE  Load a list of hosts from a flat file
   --colours=COLOURS     Set up a colour profile [dark/light/none]
