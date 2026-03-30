@@ -13,11 +13,11 @@ I did this tool to help me to check which security headers are enabled on certai
 
 The tool is very simple and it's the result of few minutes of coding.
 
-It just check headers and print a report about which are enabled and which not
+It just check headers and print a report about which are enabled and which not.
 
-I think there is a lot to improve, and I will be grateful if somebody wants to help
+I think there is a lot to improve, and I will be grateful if somebody wants to help.
 
-## How to run:
+## How to run
 
 ### Pypi
 ```bash
