@@ -1,0 +1,32 @@
+
+======================================================
+ > shcheck.py - santoru ..............................
+------------------------------------------------------
+ Simple tool to check security headers on a webserver 
+======================================================
+
+[*] Analyzing headers of [94mhttps://badssl.com[0m
+[*] Effective URL: [94mhttps://badssl.com[0m
+[!] Security header missing: X-XSS-Protection
+[!] Security header missing: [95mX-Frame-Options[0m
+[!] Security header missing: [95mX-Content-Type-Options[0m
+[!] Security header missing: [91mStrict-Transport-Security[0m
+[!] Security header missing: [95mContent-Security-Policy[0m
+[!] Security header missing: X-Permitted-Cross-Domain-Policies
+[!] Security header missing: [95mReferrer-Policy[0m
+[!] Security header missing: Expect-CT
+[!] Security header missing: [95mPermissions-Policy[0m
+[!] Security header missing: [95mCross-Origin-Embedder-Policy[0m
+[!] Security header missing: [95mCross-Origin-Resource-Policy[0m
+[!] Security header missing: [95mCross-Origin-Opener-Policy[0m
+
+[!] Possible information disclosure: header [95mServer[0m is present! (Value: nginx/1.10.3 (Ubuntu))
+
+[!] Cache control header [94mETag[0m is present! (Value: "6a5fddf9-2d99")
+[!] Cache control header [94mCache-Control[0m is present! (Value: no-store)
+[!] Cache control header [94mLast-Modified[0m is present! (Value: Tue, 21 Jul 2026 21:00:41 GMT)
+-------------------------------------------------------
+[!] Headers analysis results for [94mhttps://badssl.com[0m
+[+] [92m0[0m security header(s) present
+[-] [91m12[0m security header(s) missing
+

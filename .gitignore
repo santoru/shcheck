@@ -1,9 +1,9 @@
 # IDE
-# Pycharm
 .idea
+.vscode
 
 # Python
-## Distribution / packaging
+__pycache__/
 .Python
 build/
 develop-eggs/

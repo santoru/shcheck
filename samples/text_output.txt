@@ -1,0 +1,32 @@
+
+======================================================
+ > shcheck.py - santoru ..............................
+------------------------------------------------------
+ Simple tool to check security headers on a webserver 
+======================================================
+
+[*] Analyzing headers of https://badssl.com
+[*] Effective URL: https://badssl.com
+[!] Security header missing: X-XSS-Protection
+[!] Security header missing: X-Frame-Options
+[!] Security header missing: X-Content-Type-Options
+[!] Security header missing: Strict-Transport-Security
+[!] Security header missing: Content-Security-Policy
+[!] Security header missing: X-Permitted-Cross-Domain-Policies
+[!] Security header missing: Referrer-Policy
+[!] Security header missing: Expect-CT
+[!] Security header missing: Permissions-Policy
+[!] Security header missing: Cross-Origin-Embedder-Policy
+[!] Security header missing: Cross-Origin-Resource-Policy
+[!] Security header missing: Cross-Origin-Opener-Policy
+
+[!] Possible information disclosure: header Server is present! (Value: nginx/1.10.3 (Ubuntu))
+
+[!] Cache control header Cache-Control is present! (Value: no-store)
+[!] Cache control header Last-Modified is present! (Value: Tue, 21 Jul 2026 21:00:41 GMT)
+[!] Cache control header ETag is present! (Value: "6a5fddf9-2d99")
+-------------------------------------------------------
+[!] Headers analysis results for https://badssl.com
+[+] 0 security header(s) present
+[-] 12 security header(s) missing
+
