@@ -13,37 +13,42 @@ I did this tool to help me to check which security headers are enabled on certai
 
 The tool is very simple and it's the result of few minutes of coding.
 
-It just check headers and print a report about which are enabled and which not
+It just check headers and print a report about which are enabled and which not.
 
-I think there is a lot to improve, and I will be grateful if somebody wants to help
+I think there is a lot to improve, and I will be grateful if somebody wants to help.
 
-## How to run:
+## How to run
 
 ### Pypi
+
 ```bash
 pip3 install shcheck
 shcheck.py https://insecurity.blog
 ```
 
 ### Docker
-First build your docker container using something like this: 
+
+First build your docker container using something like this:
 
 `docker build -t shcheck .`
 
-Then simply run your docker container using something like this where you specify which website you want to check headers on: 
+Then simply run your docker container using something like this where you specify which website you want to check headers on:
 
 `docker run -it --rm shcheck https://insecurity.blog`
 
 ### From source
+
 ```bash
 git clone https://github.com/santoru/shcheck && cd shcheck
 ./shcheck.py https://insecurity.blog
 ```
 
 ### Standalone script
+
 If you want to run shcheck as a standalone script, just grab the `shcheck.py` script from the `shcheck` module/folder and copy it around.
 
 ## Usage
+
 ```
 Usage: ./shcheck.py [options] <target>
 
