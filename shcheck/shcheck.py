@@ -66,16 +66,16 @@ class Scanner:
     # Colour themes.
     THEMES = {
         "dark": {
-            'error':    '\033[91m',
-            'warning':  '\033[93m',
-            'ok':       '\033[92m',
-            'info':     '\033[94m'
+            'ok':           '\033[92m',
+            'info':         '\033[94m',
+            'warning':      '\033[93m',
+            'error':        '\033[91m',
         },
         "light": {
-            'error':    '\033[91m',
-            'warning':  '\033[95m',
-            'ok':       '\033[92m',
-            'info':     '\033[94m'
+            'ok':           '\033[92m',
+            'info':         '\033[94m',
+            'warning':      '\033[95m',
+            'error':        '\033[91m',
         },
     }
 
@@ -89,35 +89,39 @@ class Scanner:
 
     # Security headers that should be enabled.
     SECURITY_HEADERS = {
-        'X-XSS-Protection': 'deprecated',
-        'X-Frame-Options': 'warning',
-        'X-Content-Type-Options': 'warning',
-        'Strict-Transport-Security': 'error',
         'Content-Security-Policy': 'warning',
-        'X-Permitted-Cross-Domain-Policies': 'deprecated',
-        'Referrer-Policy': 'warning',
-        'Expect-CT': 'deprecated',
-        'Permissions-Policy': 'warning',
         'Cross-Origin-Embedder-Policy': 'warning',
-        'Cross-Origin-Resource-Policy': 'warning',
         'Cross-Origin-Opener-Policy': 'warning',
+        'Cross-Origin-Resource-Policy': 'warning',
+        'Permissions-Policy': 'info',
+        'Referrer-Policy': 'warning',
+        'Strict-Transport-Security': 'error',
+        'X-Content-Type-Options': 'warning',
+        'X-Frame-Options': 'warning',
+    }
+
+    # Deprecated security headers that should no longer be used.
+    DEPRECATED_HEADERS = {
+        'Expect-CT': '',
+        'X-Permitted-Cross-Domain-Policies': 'none',
+        'X-XSS-Protection': '0',
     }
 
     # Potential information disclosure headers.
     INFORMATION_HEADERS = {
-        'X-Powered-By',
         'Server',
         'X-AspNet-Version',
         'X-AspNetMvc-Version',
+        'X-Powered-By',
     }
 
     # Cache control headers.
     CACHE_HEADERS = {
         'Cache-Control',
-        'Pragma',
-        'Last-Modified',
-        'Expires',
         'ETag',
+        'Expires',
+        'Last-Modified',
+        'Pragma',
     }
 
     def __init__(self, options):
@@ -232,17 +236,180 @@ class Scanner:
         sys.stderr.write("Couldn't read a response from the server.\n")
         return None
 
-    def parse_csp(self, csp):
+    def parse_csp(self, header, csp):
+        results = {}
+        log = ["Value:"]
         unsafe_operators = ['unsafe-inline', 'unsafe-eval', 'unsafe-hashes', 'wasm-unsafe-eval', 'self']
-        self.log("Value:")
         policy_directive = csp.split(";")
         for policy in policy_directive:
             elements = policy.lstrip().split(" ", 1)
-
-            values = elements[1].replace("*", self.colorize("*", 'warning')) if len(elements) > 1 else ""
+            if not elements[0]:
+                continue
+            if len(elements) == 2:
+                operator, values = elements
+            else:
+                operator, values = elements[0], ""
+            is_unsafe = "*" in values
+            values = values.replace("*", self.colorize("*", 'warning'))
             for x in unsafe_operators:
+                is_unsafe = is_unsafe or (x in values)
                 values = values.replace(x, self.colorize(x, 'error'))
-            self.log("\t" + self.colorize(elements[0], 'info') + (": " + values if values != "" else ""))
+            if is_unsafe:
+                results[operator] = values
+            log.append("\t" + self.colorize(elements[0], 'info') + (": " + values if values != "" else ""))
+        if results:
+            log.insert(0, "[!] Header {} is present but potentially unsafe!".format(self.colorize(header, 'warning')))
+        else:
+            log.insert(0, "[*] Header {} is present!".format(self.colorize(header, 'ok')))
+        for line in log:
+            self.log(line)
+        return results
+
+    def analyze_headers(self, rUrl, headers):
+        safe = 0
+        unsafe = 0
+        missing = 0
+        leaks = 0
+        deprecated = 0
+        json_results = {}
+        json_unsafe = {}
+        json_results["present"] = {}
+        json_results["missing"] = []
+        json_results["unsafe"] = json_unsafe
+
+        information = self.options.information
+        cache_control = self.options.cache_control
+        show_deprecated = self.options.show_deprecated
+        if information:
+            json_information_disclosure = {}
+            json_results["information_disclosure"] = json_information_disclosure
+        if show_deprecated:
+            json_deprecated = {}
+            json_results["deprecated"] = json_deprecated
+        if cache_control:
+            json_caching = {}
+            json_results["caching"] = json_caching
+
+        # Before analyzing, remove X-Frame-Options if there's CSP with frame-ancestors directive.
+        target_sec_headers = dict(self.SECURITY_HEADERS)
+        if "frame-ancestors" in headers.get("content-security-policy", "").lower():
+            target_sec_headers.pop("X-Frame-Options", None)
+            headers.pop('x-frame-options', None)
+
+        # Analyze each security header.
+        for safeh in target_sec_headers:
+            lsafeh = safeh.lower()
+
+            # If header is found...
+            if lsafeh in headers:
+                value = headers.get(lsafeh)
+                lvalue = value.strip().lower().replace(" ", "")
+
+                # Taking care of special headers that could have bad values:
+
+                # Parse CSP headers.
+                if lsafeh == 'content-security-policy':
+                    csp = self.parse_csp(safeh, value)
+                    if csp:
+                        json_results["csp"] = csp
+                        json_unsafe[safeh] = value
+                        unsafe += 1
+                        continue
+
+                # unsafe-url policy is more insecure compared to the default/unset value.
+                elif lsafeh == 'referrer-policy' and lvalue == 'unsafe-url':
+                    self.log("[!] Insecure header {} is set! (Value: {})".format(self.colorize(safeh, 'warning'), self.colorize(value, 'error')))
+                    json_unsafe[safeh] = value
+                    unsafe += 1
+                    continue
+
+                # Check for max-age=0 in HSTS.
+                elif lsafeh == 'strict-transport-security' and "max-age=0" in lvalue:
+                    self.log("[!] Insecure header {} is set! (Value: {})".format(self.colorize(safeh, 'warning'), self.colorize(value, 'error')))
+                    json_unsafe[safeh] = value
+                    unsafe += 1
+                    continue
+
+                # X-Frame-Options with ALLOW-FROM is deprecated.
+                elif lsafeh == 'x-frame-options' and show_deprecated and "allow-from" in lvalue:
+                    self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(safeh, 'warning'), self.colorize(value, 'error')))
+                    json_unsafe[safeh] = value
+                    deprecated += 1
+                    continue
+
+                # Printing generic message if not specified above.
+                else:
+                    self.log("[*] Header {} is present! (Value: {})".format(self.colorize(safeh, 'ok'), value))
+                    safe += 1
+                    json_results["present"][safeh] = value
+
+            # If header is not found...
+            else:
+
+                # HSTS works obviously only on HTTPS.
+                if lsafeh == 'strict-transport-security' and not rUrl.startswith('https://'):
+                    continue
+
+                # Printing generic message if not specified above.
+                missing += 1
+                json_results["missing"].append(safeh)
+                self.log('[!] Security header missing: {}'.format(self.colorize(safeh, self.SECURITY_HEADERS.get(safeh))))
+
+        # Report the use of deprecated security headers.
+        # An empty dictionary represents the check was enabled but no results were found.
+        d_chk = False
+        for deph, goodval in self.DEPRECATED_HEADERS.items():
+            ldeph = deph.lower()
+            if ldeph in headers:
+                if show_deprecated:
+                    deprecated += 1
+                    json_deprecated[deph] = value
+                    d_chk = True
+                value = headers.get(ldeph)
+                lvalue = value.strip().lower().replace(" ", "")
+                if show_deprecated and goodval and goodval in lvalue:
+                    self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(deph, 'info'), value))
+                else:
+                    self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(deph, 'error'), value))
+                    unsafe += 1
+                    json_unsafe[deph] = value
+
+        # Report possible information disclosure headers.
+        # These will need to be reviewed manually, since the value matters, not just its presence.
+        if information:
+            i_chk = False
+            for infoh in self.INFORMATION_HEADERS:
+                linfoh = infoh.lower()
+                if linfoh in headers:
+                    leaks += 1
+                    value = headers.get(linfoh)
+                    json_information_disclosure[infoh] = value
+                    i_chk = True
+                    self.log("[!] Possible information disclosure: header {} is present! (Value: {})".format(self.colorize(infoh, 'warning'), value))
+
+        # Show cache control headers.
+        if cache_control:
+            c_chk = False
+            for cacheh in self.CACHE_HEADERS:
+                lcacheh = cacheh.lower()
+                if lcacheh in headers:
+                    value = headers.get(lcacheh)
+                    json_caching[cacheh] = value
+                    c_chk = True
+                    self.log("[!] Cache control header {} is present! (Value: {})".format(self.colorize(cacheh, 'info'), value))
+
+        self.log("-------------------------------------------------------")
+        self.log("[!] Headers analysis results for {}".format(self.colorize(rUrl, 'info')))
+        self.log("[+] {} security header(s) present and safe".format(self.colorize(str(safe), 'ok' if safe else 'error')))
+        self.log("[-] {} security header(s) present but unsafe".format(self.colorize(str(unsafe), 'error' if unsafe else 'ok')))
+        self.log("[-] {} security header(s) missing".format(self.colorize(str(missing), 'error' if missing else 'ok')))
+        if show_deprecated:
+            self.log("[-] {} deprecated security header(s) found".format(self.colorize(str(deprecated), 'info' if deprecated else 'ok')))
+        if information:
+            self.log("[-] {} potential information disclosure header(s) found".format(self.colorize(str(leaks), 'info' if leaks else 'ok')))
+        self.log("")
+
+        return json_results
 
     @staticmethod
     def parse_options(argv):
@@ -412,115 +579,6 @@ class Scanner:
                 json.dump(json_out, self.output_file)
             else:
                 print(json.dumps(json_out))
-
-    def analyze_headers(self, rUrl, headers):
-        json_results = {}
-        json_results["present"] = {}
-        json_results["missing"] = []
-        safe = 0
-        unsafe = 0
-
-        information = self.options.information
-        cache_control = self.options.cache_control
-        show_deprecated = self.options.show_deprecated
-
-        # Before analyzing, remove X-Frame-Options if there's CSP with frame-ancestors directive.
-        target_sec_headers = dict(self.SECURITY_HEADERS)
-        if "content-security-policy" in headers and "frame-ancestors" in headers.get("content-security-policy").lower():
-            target_sec_headers.pop("X-Frame-Options", None)
-            headers.pop('x-frame-options', None)
-
-        # Analyze each security header.
-        for safeh in target_sec_headers:
-            lsafeh = safeh.lower()
-            if lsafeh in headers:
-                safe += 1
-                json_results["present"][safeh] = headers.get(lsafeh)
-
-                # Taking care of special headers that could have bad values:
-
-                # Parse CSP headers.
-                if lsafeh == 'content-security-policy':
-                    self.log("[*] Header {} is present!".format(
-                            self.colorize(safeh, 'ok')))
-                    self.parse_csp(headers.get(lsafeh))
-
-                # X-XSS-Protection Should be enabled.
-                elif lsafeh == 'x-xss-protection' and headers.get(lsafeh) == '0':
-                    self.log("[*] Header {} is present! (Value: {})".format(
-                            self.colorize(safeh, 'ok'),
-                            self.colorize(headers.get(lsafeh), 'warning')))
-
-                # unsafe-url policy is more insecure compared to the default/unset value.
-                elif lsafeh == 'referrer-policy' and headers.get(lsafeh) == 'unsafe-url':
-                    self.log("[!] Insecure header {} is set! (Value: {})".format(
-                            self.colorize(safeh, 'warning'),
-                            self.colorize(headers.get(lsafeh), 'error')))
-
-                # Check for max-age=0 in HSTS.
-                elif lsafeh == 'strict-transport-security' and "max-age=0" in headers.get(lsafeh):
-                    self.log("[!] Insecure header {} is set! (Value: {})".format(
-                            self.colorize(safeh, 'warning'),
-                            self.colorize(headers.get(lsafeh), 'error')))
-
-                # Printing generic message if not specified above.
-                else:
-                    self.log("[*] Header {} is present! (Value: {})".format(
-                            self.colorize(safeh, 'ok'),
-                            headers.get(lsafeh)))
-            else:
-
-                # HSTS works obviously only on HTTPS.
-                if lsafeh == 'strict-transport-security' and not rUrl.startswith('https://'):
-                    continue
-
-                # Hide deprecated.
-                if not show_deprecated and target_sec_headers.get(safeh) == "deprecated":
-                    continue
-
-                unsafe += 1
-                json_results["missing"].append(safeh)
-                self.log('[!] Security header missing: {}'.format(
-                        self.colorize(safeh, self.SECURITY_HEADERS.get(safeh))))
-
-        if information:
-            self.log("")
-            json_results["information_disclosure"] = {}
-            i_chk = False
-            for infoh in self.INFORMATION_HEADERS:
-                linfoh = infoh.lower()
-                if linfoh in headers:
-                    json_results["information_disclosure"][infoh] = headers.get(linfoh)
-                    i_chk = True
-                    self.log("[!] Possible information disclosure: header {} is present! (Value: {})".format(
-                            self.colorize(infoh, 'warning'),
-                            headers.get(linfoh)))
-            if not i_chk:
-                self.log("[*] No information disclosure headers detected")
-
-        if cache_control:
-            self.log("")
-            json_results["caching"] = {}
-            c_chk = False
-            for cacheh in self.CACHE_HEADERS:
-                lcacheh = cacheh.lower()
-                if lcacheh in headers:
-                    json_results["caching"][cacheh] = headers.get(lcacheh)
-                    c_chk = True
-                    self.log("[!] Cache control header {} is present! "
-                        "(Value: {})".format(
-                            self.colorize(cacheh, 'info'),
-                            headers.get(lcacheh)))
-            if not c_chk:
-                self.log("[*] No caching headers detected")
-
-        self.log("-------------------------------------------------------")
-        self.log("[!] Headers analysis results for {}".format(self.colorize(rUrl, 'info')))
-        self.log("[+] {} security header(s) present".format(self.colorize(str(safe), 'ok')))
-        self.log("[-] {} security header(s) missing".format(self.colorize(str(unsafe), 'error')))
-        self.log("")
-
-        return json_results, safe, unsafe
 
 def main(argv):
     options, targets = Scanner.parse_options(argv)
