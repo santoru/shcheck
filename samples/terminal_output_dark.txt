@@ -6,27 +6,49 @@
 ======================================================
 
 [*] Analyzing headers of [94mhttps://badssl.com[0m
-[*] Effective URL: [94mhttps://badssl.com[0m
-[!] Security header missing: X-XSS-Protection
-[!] Security header missing: [93mX-Frame-Options[0m
-[!] Security header missing: [93mX-Content-Type-Options[0m
-[!] Security header missing: [91mStrict-Transport-Security[0m
+---
+HTTP Request:
+	HEAD  HTTP/1.1
+	Accept-Encoding: identity
+	Host: badssl.com
+	User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36
+	Accept: text/html,application/xhtml+xml, application/xml;q=0.9,*/*;q=0.8
+	Accept-Language: en-US;q=0.8,en;q=0.3
+	Upgrade-Insecure-Requests: 1
+	Connection: close
+	
+---
+HTTP Response:
+	HTTP/1.1 200 OK
+	Server: nginx/1.10.3 (Ubuntu)
+	Date: Fri, 31 Jul 2026 14:48:51 GMT
+	Content-Type: text/html
+	Content-Length: 11673
+	Last-Modified: Tue, 28 Jul 2026 21:02:08 GMT
+	Connection: close
+	ETag: "6a6918d0-2d99"
+	Cache-Control: no-store
+	Accept-Ranges: bytes
+	
+---
 [!] Security header missing: [93mContent-Security-Policy[0m
-[!] Security header missing: X-Permitted-Cross-Domain-Policies
-[!] Security header missing: [93mReferrer-Policy[0m
-[!] Security header missing: Expect-CT
-[!] Security header missing: [93mPermissions-Policy[0m
 [!] Security header missing: [93mCross-Origin-Embedder-Policy[0m
-[!] Security header missing: [93mCross-Origin-Resource-Policy[0m
 [!] Security header missing: [93mCross-Origin-Opener-Policy[0m
-
+[!] Security header missing: [93mCross-Origin-Resource-Policy[0m
+[!] Security header missing: [94mPermissions-Policy[0m
+[!] Security header missing: [93mReferrer-Policy[0m
+[!] Security header missing: [91mStrict-Transport-Security[0m
+[!] Security header missing: [93mX-Content-Type-Options[0m
+[!] Security header missing: [93mX-Frame-Options[0m
 [!] Possible information disclosure: header [93mServer[0m is present! (Value: nginx/1.10.3 (Ubuntu))
-
+[!] Cache control header [94mLast-Modified[0m is present! (Value: Tue, 28 Jul 2026 21:02:08 GMT)
 [!] Cache control header [94mCache-Control[0m is present! (Value: no-store)
-[!] Cache control header [94mLast-Modified[0m is present! (Value: Tue, 21 Jul 2026 21:00:41 GMT)
-[!] Cache control header [94mETag[0m is present! (Value: "6a5fddf9-2d99")
+[!] Cache control header [94mETag[0m is present! (Value: "6a6918d0-2d99")
 -------------------------------------------------------
 [!] Headers analysis results for [94mhttps://badssl.com[0m
-[+] [92m0[0m security header(s) present
-[-] [91m12[0m security header(s) missing
+[+] [91m0[0m security header(s) present and safe
+[-] [92m0[0m security header(s) present but unsafe
+[-] [91m9[0m security header(s) missing
+[-] [92m0[0m deprecated security header(s) found
+[-] [94m1[0m potential information disclosure header(s) found
 

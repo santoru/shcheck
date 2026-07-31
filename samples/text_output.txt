@@ -6,27 +6,49 @@
 ======================================================
 
 [*] Analyzing headers of https://badssl.com
-[*] Effective URL: https://badssl.com
-[!] Security header missing: X-XSS-Protection
-[!] Security header missing: X-Frame-Options
-[!] Security header missing: X-Content-Type-Options
-[!] Security header missing: Strict-Transport-Security
+---
+HTTP Request:
+	HEAD  HTTP/1.1
+	Accept-Encoding: identity
+	Host: badssl.com
+	User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36
+	Accept: text/html,application/xhtml+xml, application/xml;q=0.9,*/*;q=0.8
+	Accept-Language: en-US;q=0.8,en;q=0.3
+	Upgrade-Insecure-Requests: 1
+	Connection: close
+	
+---
+HTTP Response:
+	HTTP/1.1 200 OK
+	Server: nginx/1.10.3 (Ubuntu)
+	Date: Fri, 31 Jul 2026 14:49:24 GMT
+	Content-Type: text/html
+	Content-Length: 11673
+	Last-Modified: Tue, 28 Jul 2026 21:02:08 GMT
+	Connection: close
+	ETag: "6a6918d0-2d99"
+	Cache-Control: no-store
+	Accept-Ranges: bytes
+	
+---
 [!] Security header missing: Content-Security-Policy
-[!] Security header missing: X-Permitted-Cross-Domain-Policies
-[!] Security header missing: Referrer-Policy
-[!] Security header missing: Expect-CT
-[!] Security header missing: Permissions-Policy
 [!] Security header missing: Cross-Origin-Embedder-Policy
-[!] Security header missing: Cross-Origin-Resource-Policy
 [!] Security header missing: Cross-Origin-Opener-Policy
-
+[!] Security header missing: Cross-Origin-Resource-Policy
+[!] Security header missing: Permissions-Policy
+[!] Security header missing: Referrer-Policy
+[!] Security header missing: Strict-Transport-Security
+[!] Security header missing: X-Content-Type-Options
+[!] Security header missing: X-Frame-Options
 [!] Possible information disclosure: header Server is present! (Value: nginx/1.10.3 (Ubuntu))
-
 [!] Cache control header Cache-Control is present! (Value: no-store)
-[!] Cache control header Last-Modified is present! (Value: Tue, 21 Jul 2026 21:00:41 GMT)
-[!] Cache control header ETag is present! (Value: "6a5fddf9-2d99")
+[!] Cache control header ETag is present! (Value: "6a6918d0-2d99")
+[!] Cache control header Last-Modified is present! (Value: Tue, 28 Jul 2026 21:02:08 GMT)
 -------------------------------------------------------
 [!] Headers analysis results for https://badssl.com
-[+] 0 security header(s) present
-[-] 12 security header(s) missing
+[+] 0 security header(s) present and safe
+[-] 0 security header(s) present but unsafe
+[-] 9 security header(s) missing
+[-] 0 deprecated security header(s) found
+[-] 1 potential information disclosure header(s) found
 
