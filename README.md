@@ -50,25 +50,30 @@ If you want to run shcheck as a standalone script, just grab the `shcheck.py` sc
 ## Usage
 
 ```
-Usage: ./shcheck.py [options] <target>
+usage: ./shcheck.py [options] <targets...>
 
-Options:
-  -h, --help            show this help message and exit
-  -p PORT, --port=PORT  Set a custom port to connect to
-  -c COOKIE_STRING, --cookie=COOKIE_STRING
-                        Set cookies for the request
-  -a HEADER_STRING, --add-header=HEADER_STRING
-                        Add headers for the request e.g. 'Header: value'
-  -d, --disable-ssl-check
-                        Disable SSL/TLS certificate validation
-  -g, --use-get-method  Use GET method instead HEAD method
-  -j, --json-output     Print the output in JSON format
-  -i, --information     Display information headers
-  -x, --caching         Display caching headers
-  -k, --deprecated      Display deprecated headers
-  --no-follow           Do not follow HTTP redirects
-  --proxy=PROXY_URL     Set a proxy (Ex: http://127.0.0.1:8080)
-  --hfile=PATH_TO_FILE  Load a list of hosts from a flat file
-  --colours=COLOURS     Set up a colour profile [dark/light/none]
-  --colors=COLOURS      Alias for colours for US English
+positional arguments:
+  target                                        target URL(s) to check
+
+options:
+  -h, --help                                    show this help message and exit
+  -p PORT, --port PORT                          set a custom port to connect to
+  -c COOKIE_STRING, --cookie COOKIE_STRING      set cookies for the request
+  -a HEADER_STRING, --add-header HEADER_STRING  add headers for the request e.g. 'Header: value'
+  -o OUTPUT_FILE, --output OUTPUT_FILE          save the output to this file
+  -q, --quiet                                   suppress terminal output
+  -d, --disable-ssl-check                       disable SSL/TLS certificate validation
+  -m {HEAD,GET,POST,PUT,DELETE,TRACE}, --use-method {HEAD,GET,POST,PUT,DELETE,TRACE}
+                                                use a specified method
+  -g, --use-get-method                          alias for -m GET
+  -j, --json-output                             print the output in JSON format
+  -i, --information                             display information headers
+  -x, --caching                                 display caching headers
+  -k, --deprecated                              display deprecated headers
+  -A, --all                                     display all supported checks (-i -x -k)
+  -r, --raw                                     capture raw HTTP request and response
+  --proxy PROXY_URL                             set a proxy (Ex: http://127.0.0.1:8080)
+  --hfile PATH_TO_FILE                          load a list of hosts from a flat file
+  --colours COLOURS, --colors COLOURS           set up a colour profile [dark/light/none]
+  --no-follow                                   do not follow HTTP redirects (return 3xx response)
 ```
