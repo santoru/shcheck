@@ -20,4 +20,5 @@ from shcheck import shcheck
 
 if __name__ == "__main__":
     import sys
+
     shcheck.main(sys.argv)

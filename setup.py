@@ -1,4 +1,4 @@
-""" Tool Setup """
+"""Tool Setup"""
 # !/usr/bin/env python3
 
 # shcheck - Security headers check!
@@ -39,5 +39,5 @@ if __name__ == "__main__":
         scripts=[
             "shcheck/shcheck.py",
         ],
-        python_requires='>=3'
+        python_requires=">=3",
     )
