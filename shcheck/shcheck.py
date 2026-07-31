@@ -444,18 +444,17 @@ class Scanner:
 
         # Report the use of deprecated security headers.
         # An empty dictionary represents the check was enabled but no results were found.
-        d_chk = False
         for deph, goodval in self.DEPRECATED_HEADERS.items():
             ldeph = deph.lower()
             if ldeph in headers:
                 if show_deprecated:
                     deprecated += 1
                     json_deprecated[deph] = value
-                    d_chk = True
                 value = headers.get(ldeph)
                 lvalue = value.strip().lower().replace(" ", "")
-                if show_deprecated and goodval and goodval in lvalue:
-                    self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(deph, 'info'), value))
+                if goodval and goodval in lvalue:
+                    if show_deprecated:
+                        self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(deph, 'info'), value))
                 else:
                     self.log("[!] Deprecated security header {} is present! (Value: {})".format(self.colorize(deph, 'error'), value))
                     unsafe += 1
@@ -464,25 +463,21 @@ class Scanner:
         # Report possible information disclosure headers.
         # These will need to be reviewed manually, since the value matters, not just its presence.
         if information:
-            i_chk = False
             for infoh in self.INFORMATION_HEADERS:
                 linfoh = infoh.lower()
                 if linfoh in headers:
                     leaks += 1
                     value = headers.get(linfoh)
                     json_information_disclosure[infoh] = value
-                    i_chk = True
                     self.log("[!] Possible information disclosure: header {} is present! (Value: {})".format(self.colorize(infoh, 'warning'), value))
 
         # Show cache control headers.
         if cache_control:
-            c_chk = False
             for cacheh in self.CACHE_HEADERS:
                 lcacheh = cacheh.lower()
                 if lcacheh in headers:
                     value = headers.get(lcacheh)
                     json_caching[cacheh] = value
-                    c_chk = True
                     self.log("[!] Cache control header {} is present! (Value: {})".format(self.colorize(cacheh, 'info'), value))
 
         self.log("-------------------------------------------------------")
@@ -642,9 +637,6 @@ class Scanner:
         # Scan all targets in order.
         json_out = {}
         for target in targets:
-            safe = 0
-            unsafe = 0
-
             self.log("[*] Analyzing headers of {}".format(self.colorize(target, 'info')))
 
             # Check if target is valid.

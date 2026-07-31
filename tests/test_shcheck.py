@@ -1,7 +1,6 @@
 import http.client
 import io
 import json
-import sys
 import urllib.error
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
