@@ -100,7 +100,7 @@ def raw_request(req, *, http_version="1.1", connection_close=True):
     if "accept-encoding" not in lower:
         leading.append(("Accept-Encoding", "identity"))
 
-    lines = ["%s %s HTTP/%s" % (req.get_method(), req.selector, http_version)]
+    lines = ["%s %s HTTP/%s" % (req.get_method(), req.selector or "/", http_version)]
     for name, value in leading + list(headers.items()):
         lines.append("%s: %s" % (name, value))
 
@@ -336,7 +336,7 @@ class Scanner:
                     )
 
             else:
-                sys.stderr.write("{}\n".format(self.colorize(str(e))))
+                sys.stderr.write("{}\n".format(self.colorize(str(e), "error")))
 
     def check_target(self, target, req_headers=None):
         response = None
