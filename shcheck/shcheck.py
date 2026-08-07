@@ -450,6 +450,7 @@ class Scanner:
                         for line in pvalue.split(";"):
                             if line.strip():
                                 self.log("\t" + line.strip() + ";")
+                        json_unsafe[safeh] = value
                         unsafe += 1
                         continue
 
@@ -512,10 +513,10 @@ class Scanner:
         for deph, goodval in self.DEPRECATED_HEADERS.items():
             ldeph = deph.lower()
             if ldeph in headers:
+                value = headers.get(ldeph)
                 if show_deprecated:
                     deprecated += 1
                     json_deprecated[deph] = value
-                value = headers.get(ldeph)
                 lvalue = value.strip().lower().replace(" ", "")
                 if goodval and goodval in lvalue:
                     if show_deprecated:
