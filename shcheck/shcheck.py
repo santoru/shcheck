@@ -271,9 +271,11 @@ class Scanner:
                 self.output_file = None
 
     def log(self, string):
+        # In JSON mode stdout carries the JSON document, unless it goes to a file.
+        stdout_is_json = self.options.json_output and not self.options.output_file
         if self.output_file is not None and not self.options.json_output:
             self.output_file.write(_strip_ansi_codes(string) + "\n")
-        if not self.options.quiet:
+        if not self.options.quiet and not stdout_is_json:
             print(string)
 
     def banner(self):
@@ -791,12 +793,6 @@ class Scanner:
             args.information = True
             args.cache_control = True
             args.show_deprecated = True
-
-        # The --quiet flag is ignored (or forced) when nonsensical not to do so.
-        if not (args.json_output or args.output_file):
-            args.quiet = False
-        else:
-            args.quiet = args.quiet or (args.json_output and not args.output_file)
 
         # Return the processed options and list of targets.
         return args, targets

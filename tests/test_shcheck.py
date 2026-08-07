@@ -120,13 +120,19 @@ def test_parse_options_all_flag_enables_extra_checks():
     assert options.show_deprecated
 
 
-def test_parse_options_json_output_implies_quiet_without_output_file():
-    options, _targets = Scanner.parse_options(["shcheck.py", "-j", HTTPS_URL])
+def test_parse_options_quiet_is_off_by_default():
+    options, _targets = Scanner.parse_options(["shcheck.py", HTTPS_URL])
+    assert not options.quiet
+
+
+def test_parse_options_quiet_flag_is_honoured():
+    options, _targets = Scanner.parse_options(["shcheck.py", "-q", HTTPS_URL])
     assert options.quiet
 
 
-def test_parse_options_quiet_ignored_for_plain_terminal_output():
-    options, _targets = Scanner.parse_options(["shcheck.py", "-q", HTTPS_URL])
+def test_parse_options_json_output_does_not_imply_quiet():
+    # --quiet is the user's call alone; -j no longer forces it on
+    options, _targets = Scanner.parse_options(["shcheck.py", "-j", HTTPS_URL])
     assert not options.quiet
 
 
@@ -216,12 +222,9 @@ def test_raw_request_reproduces_the_wire_format():
     assert raw.endswith("\r\n\r\n")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="raw_request() does not reproduce putrequest()'s `url = url or '/'` "
-    "rule, so a target with no path is captured as 'HEAD  HTTP/1.1'",
-)
 def test_raw_request_uses_slash_for_an_empty_selector():
+    # Regression: a target with no path has an empty selector, and putrequest()
+    # substitutes '/' for it, so the capture must do the same
     request = urllib.request.Request(HTTPS_URL)
     request.get_method = lambda: "HEAD"
     assert shcheck.raw_request(request).startswith(b"HEAD / HTTP/1.1\r\n")
@@ -728,18 +731,46 @@ def test_json_mode_stdout_stays_parseable_when_a_target_fails():
     assert json.loads(stdout) == {}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="print_error() calls colorize() without the alert argument, so an "
-    "error outside the ValueError/HTTPError/URLError branches raises TypeError",
-)
+def test_json_mode_stdout_holds_nothing_but_the_json_document():
+    # Regression: the banner and the per-header lines used to be printed to
+    # stdout ahead of the JSON, so `shcheck -j target | jq .` could not parse it
+    stdout, _err = _run_main(["-j"], [(HTTPS_URL, SAMPLE_HEADERS)])
+    assert stdout.rstrip("\n") == json.dumps(json.loads(stdout))
+
+
+def test_json_mode_output_file_still_shows_progress(tmp_path):
+    # stdout is only reserved when the JSON document is going there
+    out_path = tmp_path / "report.json"
+    stdout, _err = _run_main(
+        ["-j", "-o", str(out_path), "--colours", "none"],
+        [(HTTPS_URL, SAMPLE_HEADERS)],
+    )
+    assert "Header X-Frame-Options is present" in stdout
+    assert json.loads(out_path.read_text(encoding="utf-8"))[HTTPS_URL]["present"]
+
+
+def test_json_mode_output_file_respects_quiet(tmp_path):
+    out_path = tmp_path / "report.json"
+    stdout, _err = _run_main(
+        ["-j", "-q", "-o", str(out_path)], [(HTTPS_URL, SAMPLE_HEADERS)]
+    )
+    assert stdout == ""
+    assert json.loads(out_path.read_text(encoding="utf-8"))[HTTPS_URL]["present"]
+
+
 def test_generic_error_is_reported_rather_than_raised():
+    # Regression: errors outside the ValueError/HTTPError/URLError branches used
+    # to raise TypeError out of the scan instead of being reported
     _out, err = _run_failing_main([], TimeoutError("timed out"))
     assert "timed out" in err
 
 
-def test_quiet_suppresses_stdout(tmp_path):
-    # -q is only honoured when the output goes somewhere else
+def test_quiet_suppresses_stdout():
+    out, _err = _run_main(["-q"], [(HTTPS_URL, SAMPLE_HEADERS)])
+    assert out == ""
+
+
+def test_quiet_still_writes_the_output_file(tmp_path):
     out_path = tmp_path / "report.txt"
     out, _err = _run_main(["-q", "-o", str(out_path)], [(HTTPS_URL, SAMPLE_HEADERS)])
     assert out == ""
