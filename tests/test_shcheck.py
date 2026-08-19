@@ -413,3 +413,144 @@ def test_bug2_no_response_error_visible_in_json_mode():
                side_effect=http.client.UnknownProtocol('HTTP/2')):
         shcheck.main()
     assert "Couldn't read a response from server." in captured_stderr.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# HSTS policy analysis
+# ---------------------------------------------------------------------------
+
+def _hsts_issue_codes(result):
+    return {issue['code'] for issue in result['issues']}
+
+
+def test_hsts_max_age_only():
+    result = shcheck.analyze_hsts('max-age=31536000')
+
+    assert result['max_age'] == 31536000
+    assert result['include_subdomains'] is False
+    assert result['preload'] is False
+    assert _hsts_issue_codes(result) == {
+        'missing_include_subdomains',
+        'missing_preload',
+    }
+
+
+def test_hsts_full_policy():
+    result = shcheck.analyze_hsts(
+        'max-age=31536000; includeSubDomains; preload'
+    )
+
+    assert result['max_age'] == 31536000
+    assert result['include_subdomains'] is True
+    assert result['preload'] is True
+    assert result['issues'] == []
+
+
+def test_hsts_directives_are_case_insensitive():
+    result = shcheck.analyze_hsts(
+        'MAX-AGE=31536000; INCLUDESUBDOMAINS; PRELOAD'
+    )
+
+    assert result['max_age'] == 31536000
+    assert result['include_subdomains'] is True
+    assert result['preload'] is True
+    assert result['issues'] == []
+
+
+def test_hsts_quoted_max_age():
+    result = shcheck.analyze_hsts(
+        'max-age="31536000"; includeSubDomains; preload'
+    )
+
+    assert result['max_age'] == 31536000
+    assert result['issues'] == []
+
+
+def test_hsts_max_age_zero():
+    result = shcheck.analyze_hsts('max-age=0; includeSubDomains')
+
+    assert result['max_age'] == 0
+    assert _hsts_issue_codes(result) == {'hsts_disabled'}
+
+
+def test_hsts_missing_max_age():
+    result = shcheck.analyze_hsts('includeSubDomains')
+
+    codes = _hsts_issue_codes(result)
+    assert 'missing_max_age' in codes
+    assert 'missing_preload' in codes
+
+
+def test_hsts_invalid_max_age():
+    result = shcheck.analyze_hsts(
+        'max-age=forever; includeSubDomains'
+    )
+
+    assert 'invalid_max_age' in _hsts_issue_codes(result)
+    assert result['max_age'] is None
+
+
+def test_hsts_include_subdomains_must_not_have_value():
+    result = shcheck.analyze_hsts(
+        'max-age=31536000; includeSubDomains=true'
+    )
+
+    codes = _hsts_issue_codes(result)
+    assert 'invalid_include_subdomains' in codes
+    assert 'missing_include_subdomains' in codes
+    assert result['include_subdomains'] is False
+
+
+def test_hsts_preload_must_not_have_value():
+    result = shcheck.analyze_hsts(
+        'max-age=31536000; includeSubDomains; preload=true'
+    )
+
+    codes = _hsts_issue_codes(result)
+    assert 'invalid_preload' in codes
+    assert 'missing_preload' not in codes
+    assert result['preload'] is False
+
+
+def test_hsts_duplicate_directive():
+    result = shcheck.analyze_hsts(
+        'max-age=31536000; max-age=63072000; includeSubDomains'
+    )
+
+    assert 'duplicate_directive' in _hsts_issue_codes(result)
+    assert result['max_age'] == 31536000
+
+
+def test_hsts_preload_requirements():
+    result = shcheck.analyze_hsts('max-age=86400; preload')
+
+    codes = _hsts_issue_codes(result)
+    assert 'missing_include_subdomains' in codes
+    assert 'preload_max_age_too_short' in codes
+
+
+def test_json_contains_hsts_analysis():
+    headers = [
+        ('Strict-Transport-Security', 'max-age=31536000'),
+    ]
+
+    data = _run_json([], headers, HTTPS_URL)
+    hsts = data[HTTPS_URL]['hsts']
+
+    assert hsts['max_age'] == 31536000
+    assert hsts['include_subdomains'] is False
+    assert hsts['preload'] is False
+    assert 'missing_include_subdomains' in _hsts_issue_codes(hsts)
+    assert 'missing_preload' in _hsts_issue_codes(hsts)
+
+
+def test_normal_output_reports_hsts_hardening():
+    headers = [
+        ('Strict-Transport-Security', 'max-age=31536000'),
+    ]
+
+    output = _run_normal([], headers, HTTPS_URL)
+
+    assert 'Header Strict-Transport-Security is present' in output
+    assert 'HSTS includeSubDomains directive is missing; subdomains are not covered' in output
+    assert 'HSTS preload directive is not set (optional)' in output
