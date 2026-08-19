@@ -123,6 +123,139 @@ def parse_headers(hdrs):
     return {x.lower(): y for x, y in hdrs}
 
 
+def analyze_hsts(value):
+    """Parse an HSTS header value and return settings and findings."""
+    result = {
+        "max_age": None,
+        "include_subdomains": False,
+        "preload": False,
+        "issues": [],
+    }
+
+    seen = set()
+
+    directives = [
+        directive.strip()
+        for directive in value.split(';')
+        if directive.strip()
+    ]
+
+    for directive in directives:
+        name, separator, directive_value = directive.partition('=')
+
+        name = name.strip().lower()
+        directive_value = directive_value.strip()
+
+        if name in seen:
+            result["issues"].append({
+                "code": "duplicate_directive",
+                "severity": "error",
+                "message": "HSTS directive appears more than once: {}".format(name),
+            })
+            continue
+
+        seen.add(name)
+
+        if name == 'max-age':
+            if (
+                len(directive_value) >= 2
+                and directive_value[0] == '"'
+                and directive_value[-1] == '"'
+            ):
+                directive_value = directive_value[1:-1]
+
+            if not separator or not directive_value.isdigit():
+                result["issues"].append({
+                    "code": "invalid_max_age",
+                    "severity": "error",
+                    "message": "HSTS max-age directive is missing or invalid",
+                })
+            else:
+                result["max_age"] = int(directive_value)
+
+        elif name == 'includesubdomains':
+            if separator:
+                result["issues"].append({
+                    "code": "invalid_include_subdomains",
+                    "severity": "error",
+                    "message": "HSTS includeSubDomains must not have a value",
+                })
+            else:
+                result["include_subdomains"] = True
+
+        elif name == 'preload':
+            if separator:
+                result["issues"].append({
+                    "code": "invalid_preload",
+                    "severity": "warning",
+                    "message": "HSTS preload directive must not have a value",
+                })
+            else:
+                result["preload"] = True
+
+    if result["max_age"] is None and not any(
+        issue["code"] == "invalid_max_age"
+        for issue in result["issues"]
+    ):
+        result["issues"].append({
+            "code": "missing_max_age",
+            "severity": "error",
+            "message": "HSTS max-age directive is missing",
+        })
+
+    elif result["max_age"] == 0:
+        result["issues"].append({
+            "code": "hsts_disabled",
+            "severity": "error",
+            "message": "HSTS is effectively disabled (max-age=0)",
+        })
+
+        return result
+
+    if not result["include_subdomains"]:
+        message = (
+            "HSTS includeSubDomains directive is missing; "
+            "subdomains are not covered"
+        )
+
+        if result["preload"]:
+            message += " and preload requirements are not met"
+
+        result["issues"].append({
+            "code": "missing_include_subdomains",
+            "severity": "warning",
+            "message": message,
+        })
+
+    invalid_preload = any(
+        issue["code"] == "invalid_preload"
+        for issue in result["issues"]
+    )
+
+    if not result["preload"] and not invalid_preload:
+        result["issues"].append({
+            "code": "missing_preload",
+            "severity": "info",
+            "message": "HSTS preload directive is not set (optional)",
+        })
+
+    elif result["preload"]:
+        if (
+            result["max_age"] is not None
+            and result["max_age"] < 31536000
+        ):
+            result["issues"].append({
+                "code": "preload_max_age_too_short",
+                "severity": "warning",
+                "message": (
+                    "HSTS preload requires max-age of at least "
+                    "31536000 seconds"
+                ),
+            })
+
+    return result
+
+
 def append_port(target, port):
     if target[-1:] == '/':
         return target[:-1] + ':' + port + '/'
@@ -405,11 +538,31 @@ def main():
                             colorize(safeh, 'warning'),
                             colorize(headers.get(lsafeh), 'error')))
 
-                # check for max-age=0 in HSTS
-                elif lsafeh == 'strict-transport-security' and "max-age=0" in headers.get(lsafeh):
-                    log("[!] Insecure header {} is set! (Value: {})".format(
-                            colorize(safeh, 'warning'),
-                            colorize(headers.get(lsafeh), 'error')))
+                # Analyze HSTS directives and hardening options
+                elif lsafeh == 'strict-transport-security':
+                    hsts_value = headers.get(lsafeh)
+                    hsts = analyze_hsts(hsts_value)
+
+                    json_results["hsts"] = hsts
+
+                    log("[*] Header {} is present! (Value: {})".format(
+                            colorize(safeh, 'ok'),
+                            hsts_value))
+
+                    if hsts["include_subdomains"]:
+                        log("[*] HSTS {} directive is enabled".format(
+                                colorize("includeSubDomains", 'ok')))
+
+                    if hsts["preload"]:
+                        log("[*] HSTS {} directive is enabled".format(
+                                colorize("preload", 'ok')))
+
+                    for issue in hsts["issues"]:
+                        marker = "[i]" if issue["severity"] == "info" else "[!]"
+
+                        log("{} {}".format(
+                                marker,
+                                colorize(issue["message"], issue["severity"])))
 
                 # Printing generic message if not specified above
                 else:
