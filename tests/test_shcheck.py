@@ -90,6 +90,12 @@ def test_append_port_with_trailing_slash():
 def test_append_port_without_trailing_slash():
     assert shcheck.append_port('http://example.com', '8080') == 'http://example.com:8080'
 
+def test_append_port_with_path():
+    assert shcheck.append_port('https://example.com/some/path', '8443') == 'https://example.com:8443/some/path'
+
+def test_append_port_with_path_and_trailing_slash():
+    assert shcheck.append_port('https://example.com/some/path/', '8443') == 'https://example.com:8443/some/path/'
+
 
 # ---------------------------------------------------------------------------
 # normalize

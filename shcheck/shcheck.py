@@ -124,9 +124,19 @@ def parse_headers(hdrs):
 
 
 def append_port(target, port):
-    if target[-1:] == '/':
-        return target[:-1] + ':' + port + '/'
-    return target + ':' + port
+    scheme = ''
+    rest = target
+    if '://' in target:
+        scheme, rest = target.split('://', 1)
+        scheme += '://'
+
+    if '/' in rest:
+        host, path = rest.split('/', 1)
+        path = '/' + path
+    else:
+        host, path = rest, ''
+
+    return '{}{}:{}{}'.format(scheme, host, port, path)
 
 
 class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
