@@ -47,11 +47,11 @@ def _strip_ansi_codes(string):
 
 
 # log - prints unless JSON output is set
-def log(string, output_file=None):
+def log(string):
     if options.json_output:
         return
-    if output_file:
-        output_file.write(_strip_ansi_codes(string) + "\n")
+    if options.output_handle:
+        options.output_handle.write(_strip_ansi_codes(string) + "\n")
     print(string)
 
 
@@ -233,14 +233,13 @@ def check_target(target, req_headers=None, usemethod='HEAD'):
     return None
 
 
-def report(target, safe, unsafe, output_file):
-    log("-------------------------------------------------------", output_file)
-    log("[!] Analyzing headers for {}".format(colorize(target, 'info')), output_file)
-    log("[+] {} security header(s) present".format(colorize(str(safe), 'ok')), output_file)
+def report(target, safe, unsafe):
+    log("-------------------------------------------------------")
+    log("[!] Analyzing headers for {}".format(colorize(target, 'info')))
+    log("[+] {} security header(s) present".format(colorize(str(safe), 'ok')))
     log("[-] {} security header(s) missing".format(
-            colorize(str(unsafe), 'error')),
-        output_file=output_file)
-    log("", output_file)
+        colorize(str(unsafe), 'error')))
+    log("")
 
 
 def parse_csp(csp):
@@ -314,6 +313,8 @@ def parse_options():
     args = parser.parse_args()
     if args.useget:
         args.usemethod = 'GET'
+    # Opened in main() when -o is set; log() mirrors its output there
+    args.output_handle = None
     targets = args.targets
 
     if len(targets) < 1 and args.hfile is None:
@@ -336,7 +337,6 @@ def main():
     show_deprecated = options.show_deprecated
     hfile = options.hfile
     json_output = options.json_output
-    output_file = options.output_file
 
     banner()
     req_headers = dict(client_headers)
@@ -362,9 +362,8 @@ def main():
 
     build_opener(options.proxy, options.ssldisabled, options.no_follow)
 
-    if output_file:
-        # open and clear file to append logs
-        output_file = open(output_file, "w", encoding="utf-8")
+    if options.output_file:
+        options.output_handle = open(options.output_file, "w", encoding="utf-8")
 
     json_out = {}
     for target in targets:
@@ -374,9 +373,7 @@ def main():
 
         safe = 0
         unsafe = 0
-
-        log("[*] Analyzing headers of {}".format(colorize(target, 'info')),
-            output_file=output_file)
+        log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
 
         # Check if target is valid
         response = check_target(target, req_headers, usemethod=options.usemethod)
@@ -385,8 +382,7 @@ def main():
         rUrl = response.geturl()
         json_results = {}
 
-        log("[*] Effective URL: {}".format(colorize(rUrl, 'info')),
-            output_file=output_file)
+        log("[*] Effective URL: {}".format(colorize(rUrl, 'info')))
         headers = parse_headers(response.getheaders())
         json_headers[rUrl] = json_results
         json_results["present"] = {}
@@ -409,37 +405,32 @@ def main():
                 # Parse CSP headers
                 if lsafeh == 'content-security-policy':
                     log("[*] Header {} is present!".format(
-                            colorize(safeh, 'ok')),
-                        output_file=output_file)
+                            colorize(safeh, 'ok')))
                     parse_csp(headers.get(lsafeh))
 
                 # X-XSS-Protection Should be enabled
                 elif lsafeh == 'x-xss-protection' and headers.get(lsafeh) == '0':
                     log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            colorize(headers.get(lsafeh), 'warning')),
-                        output_file=output_file)
+                            colorize(headers.get(lsafeh), 'warning')))
 
                 # unsafe-url policy is more insecure compared to the default/unset value
                 elif lsafeh == 'referrer-policy' and headers.get(lsafeh) == 'unsafe-url':
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
-                            colorize(headers.get(lsafeh), 'error')),
-                        output_file=output_file)
+                            colorize(headers.get(lsafeh), 'error')))
 
                 # check for max-age=0 in HSTS
                 elif lsafeh == 'strict-transport-security' and "max-age=0" in headers.get(lsafeh):
                     log("[!] Insecure header {} is set! (Value: {})".format(
                             colorize(safeh, 'warning'),
-                            colorize(headers.get(lsafeh), 'error')),
-                        output_file=output_file)
+                            colorize(headers.get(lsafeh), 'error')))
 
                 # Printing generic message if not specified above
                 else:
                     log("[*] Header {} is present! (Value: {})".format(
                             colorize(safeh, 'ok'),
-                            headers.get(lsafeh)),
-                        output_file=output_file)
+                            headers.get(lsafeh)))
             else:
                 unsafe += 1
                 json_results["missing"].append(safeh)
@@ -454,13 +445,12 @@ def main():
                     json_results["missing"].remove(safeh)
                     continue
                 log('[!] Security header missing: {}'.format(
-                        colorize(safeh, sec_headers.get(safeh))),
-                    output_file=output_file)
+                    colorize(safeh, sec_headers.get(safeh))))
 
         if information:
             json_results["information_disclosure"] = {}
             i_chk = False
-            log("", output_file=output_file)
+            log("")
             for infoh in information_headers:
                 linfoh = infoh.lower()
                 if linfoh in headers:
@@ -469,16 +459,14 @@ def main():
                     log("[!] Possible information disclosure: "
                         "header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
-                            headers.get(linfoh),
-                        output_file=output_file))
+                            headers.get(linfoh)))
             if not i_chk:
-                log("[*] No information disclosure headers detected",
-                output_file=output_file)
+                log("[*] No information disclosure headers detected")
 
         if cache_control:
             json_results["caching"] = {}
             c_chk = False
-            log("", output_file=output_file)
+            log("")
             for cacheh in cache_headers:
                 lcacheh = cacheh.lower()
                 if lcacheh in headers:
@@ -487,22 +475,20 @@ def main():
                     log("[!] Cache control header {} is present! "
                         "(Value: {})".format(
                             colorize(cacheh, 'info'),
-                            headers.get(lcacheh)),
-                        output_file=output_file)
+                            headers.get(lcacheh)))
             if not c_chk:
-                log("[*] No caching headers detected",
-                    output_file=output_file)
+                log("[*] No caching headers detected")
 
-        report(rUrl, safe, unsafe, output_file)
+        report(rUrl, safe, unsafe)
         json_out.update(json_headers)
 
     if json_output:
         print(json.dumps(json_out))
 
-    if output_file:
+    if options.output_handle:
         if json_output:
-            output_file.write(json.dumps(json_out, indent=4))
-        output_file.close()
+            options.output_handle.write(json.dumps(json_out, indent=4))
+        options.output_handle.close()
 
 
 if __name__ == "__main__":
