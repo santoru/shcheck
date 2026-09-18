@@ -26,6 +26,7 @@ import sys
 import ssl
 import json
 import argparse
+import re
 
 
 def _make_colours(warning):
@@ -41,10 +42,16 @@ darkcolours  = _make_colours('\033[93m')
 lightcolours = _make_colours('\033[95m')
 
 
+def _strip_ansi_codes(string):
+    return re.sub(r'\x1b\[[0-9;]*m', '', string)
+
+
 # log - prints unless JSON output is set
 def log(string):
     if options.json_output:
         return
+    if options.output_file:
+        options.output_file.write(_strip_ansi_codes(string) + "\n")
     print(string)
 
 
@@ -234,6 +241,7 @@ def report(target, safe, unsafe):
         colorize(str(unsafe), 'error')))
     log("")
 
+
 def parse_csp(csp):
     unsafe_operators = ['unsafe-inline', 'unsafe-eval', 'unsafe-hashes', 'wasm-unsafe-eval', 'self']
     log("Value:")
@@ -264,6 +272,9 @@ def parse_options():
     parser.add_argument("-a", "--add-header", dest="custom_headers",
                         help="Add headers for the request e.g. 'Header: value'",
                         metavar="HEADER_STRING", action="append")
+    parser.add_argument("-o" , "--output", dest="output_file",
+                        help="Save the output to this file",
+                        metavar="OUTPUT_FILE")
     parser.add_argument('-d', "--disable-ssl-check", dest="ssldisabled",
                         default=False,
                         help="Disable SSL/TLS certificate validation",
@@ -307,6 +318,10 @@ def parse_options():
     if len(targets) < 1 and args.hfile is None:
         parser.print_help()
         sys.exit(12)
+
+    # Replace the path with the open file; log() mirrors its output there
+    if args.output_file:
+        args.output_file = open(args.output_file, "w", encoding="utf-8")
 
     return args, targets
 
@@ -357,7 +372,6 @@ def main():
 
         safe = 0
         unsafe = 0
-
         log("[*] Analyzing headers of {}".format(colorize(target, 'info')))
 
         # Check if target is valid
@@ -441,8 +455,8 @@ def main():
                 if linfoh in headers:
                     json_results["information_disclosure"][infoh] = headers.get(linfoh)
                     i_chk = True
-                    log("[!] Possible information disclosure: \
-header {} is present! (Value: {})".format(
+                    log("[!] Possible information disclosure: "
+                        "header {} is present! (Value: {})".format(
                             colorize(infoh, 'warning'),
                             headers.get(linfoh)))
             if not i_chk:
@@ -457,8 +471,8 @@ header {} is present! (Value: {})".format(
                 if lcacheh in headers:
                     json_results["caching"][cacheh] = headers.get(lcacheh)
                     c_chk = True
-                    log("[!] Cache control header {} is present! \
-(Value: {})".format(
+                    log("[!] Cache control header {} is present! "
+                        "(Value: {})".format(
                             colorize(cacheh, 'info'),
                             headers.get(lcacheh)))
             if not c_chk:
@@ -469,6 +483,11 @@ header {} is present! (Value: {})".format(
 
     if json_output:
         print(json.dumps(json_out))
+
+    if options.output_file:
+        if json_output:
+            options.output_file.write(json.dumps(json_out, indent=4))
+        options.output_file.close()
 
 
 if __name__ == "__main__":

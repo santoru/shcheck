@@ -35,6 +35,7 @@ def make_options(**kwargs):
         usemethod='HEAD',
         proxy=None,
         no_follow=False,
+        output_file=None,
     )
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
@@ -413,3 +414,66 @@ def test_bug2_no_response_error_visible_in_json_mode():
                side_effect=http.client.UnknownProtocol('HTTP/2')):
         shcheck.main()
     assert "Couldn't read a response from server." in captured_stderr.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# Output file (-o)
+# ---------------------------------------------------------------------------
+
+def _run_with_output_file(extra_args, headers, url, path):
+    """Run main() with -o <path> and return (captured stdout, file contents)."""
+    stdout = _run_normal(['-o', str(path)] + extra_args, headers, url)
+    return stdout, path.read_text(encoding='utf-8')
+
+
+def test_output_file_contains_information_disclosure(tmp_path):
+    """With -i -o, information disclosure findings must be written to the output file,
+    not only printed to stdout."""
+    headers = SAMPLE_HEADERS + [('Server', 'Apache/2.4')]
+    _, written = _run_with_output_file(['-i'], headers, HTTPS_URL, tmp_path / 'out.txt')
+    assert ('[!] Possible information disclosure: '
+            'header Server is present! (Value: Apache/2.4)\n') in written
+
+
+def test_output_file_contains_csp_directives(tmp_path):
+    """The per-directive CSP breakdown from parse_csp() must be written to the output file."""
+    headers = SAMPLE_HEADERS + [('Content-Security-Policy', "default-src 'self'; img-src *")]
+    _, written = _run_with_output_file([], headers, HTTPS_URL, tmp_path / 'out.txt')
+    assert "Value:\n\tdefault-src: 'self'\n\timg-src: *\n" in written
+
+
+def test_output_file_mirrors_stdout(tmp_path):
+    """The output file must contain exactly what is printed to stdout, banner
+    included, so no log line can be missed; covers CSP, information disclosure
+    and caching output."""
+    headers = SAMPLE_HEADERS + [
+        ('Content-Security-Policy', "default-src 'self'"),
+        ('Server', 'Apache/2.4'),
+        ('Cache-Control', 'no-store'),
+    ]
+    stdout, written = _run_with_output_file(['-i', '-x'], headers, HTTPS_URL,
+                                            tmp_path / 'out.txt')
+    assert written == stdout
+
+
+def test_output_file_contains_only_json_with_json_flag(tmp_path):
+    """With -j -o, the output file must hold nothing but a valid JSON document with
+    the scan results, independent of what is printed to stdout."""
+    headers = SAMPLE_HEADERS + [('Server', 'Apache/2.4')]
+    _, written = _run_with_output_file(['-j', '-i'], headers, HTTPS_URL,
+                                       tmp_path / 'out.json')
+    data = json.loads(written)
+    assert list(data) == [HTTPS_URL]
+    assert data[HTTPS_URL]['present']['X-Frame-Options'] == 'DENY'
+    assert data[HTTPS_URL]['information_disclosure'] == {'Server': 'Apache/2.4'}
+
+
+def test_run_without_output_file_leaves_previous_output_file_untouched(tmp_path):
+    """A run without -o after a run with -o must not write to the previous run's
+    file handle: the second run must succeed and the first file must be unchanged
+    (the handle lives on options, which main() rebuilds on every run)."""
+    path = tmp_path / 'out.txt'
+    _, first_written = _run_with_output_file([], SAMPLE_HEADERS, HTTPS_URL, path)
+    _run_normal(['-i'], SAMPLE_HEADERS + [('Server', 'Apache/2.4')], HTTPS_URL)
+    # ensure second run does not append to the first run
+    assert path.read_text(encoding='utf-8') == first_written
