@@ -50,8 +50,8 @@ def _strip_ansi_codes(string):
 def log(string):
     if options.json_output:
         return
-    if options.output_handle:
-        options.output_handle.write(_strip_ansi_codes(string) + "\n")
+    if options.output_file:
+        options.output_file.write(_strip_ansi_codes(string) + "\n")
     print(string)
 
 
@@ -313,13 +313,15 @@ def parse_options():
     args = parser.parse_args()
     if args.useget:
         args.usemethod = 'GET'
-    # Opened in main() when -o is set; log() mirrors its output there
-    args.output_handle = None
     targets = args.targets
 
     if len(targets) < 1 and args.hfile is None:
         parser.print_help()
         sys.exit(12)
+
+    # Replace the path with the open file; log() mirrors its output there
+    if args.output_file:
+        args.output_file = open(args.output_file, "w", encoding="utf-8")
 
     return args, targets
 
@@ -361,9 +363,6 @@ def main():
             targets = f.read().splitlines()
 
     build_opener(options.proxy, options.ssldisabled, options.no_follow)
-
-    if options.output_file:
-        options.output_handle = open(options.output_file, "w", encoding="utf-8")
 
     json_out = {}
     for target in targets:
@@ -485,10 +484,10 @@ def main():
     if json_output:
         print(json.dumps(json_out))
 
-    if options.output_handle:
+    if options.output_file:
         if json_output:
-            options.output_handle.write(json.dumps(json_out, indent=4))
-        options.output_handle.close()
+            options.output_file.write(json.dumps(json_out, indent=4))
+        options.output_file.close()
 
 
 if __name__ == "__main__":

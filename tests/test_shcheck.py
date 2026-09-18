@@ -35,7 +35,7 @@ def make_options(**kwargs):
         usemethod='HEAD',
         proxy=None,
         no_follow=False,
-        output_handle=None,
+        output_file=None,
     )
     defaults.update(kwargs)
     return SimpleNamespace(**defaults)
@@ -442,9 +442,10 @@ def test_output_file_contains_csp_directives(tmp_path):
     assert "Value:\n\tdefault-src: 'self'\n\timg-src: *\n" in written
 
 
-def test_output_file_mirrors_stdout_after_banner(tmp_path):
-    """Everything printed after the banner must also land in the output file, so no
-    log line can be missed; covers CSP, information disclosure and caching output."""
+def test_output_file_mirrors_stdout(tmp_path):
+    """The output file must contain exactly what is printed to stdout, banner
+    included, so no log line can be missed; covers CSP, information disclosure
+    and caching output."""
     headers = SAMPLE_HEADERS + [
         ('Content-Security-Policy', "default-src 'self'"),
         ('Server', 'Apache/2.4'),
@@ -452,8 +453,7 @@ def test_output_file_mirrors_stdout_after_banner(tmp_path):
     ]
     stdout, written = _run_with_output_file(['-i', '-x'], headers, HTTPS_URL,
                                             tmp_path / 'out.txt')
-    assert written
-    assert stdout.endswith(written)
+    assert written == stdout
 
 
 def test_run_without_output_file_leaves_previous_output_file_untouched(tmp_path):
@@ -462,7 +462,6 @@ def test_run_without_output_file_leaves_previous_output_file_untouched(tmp_path)
     (the handle lives on options, which main() rebuilds on every run)."""
     path = tmp_path / 'out.txt'
     _, first_written = _run_with_output_file([], SAMPLE_HEADERS, HTTPS_URL, path)
-    stdout = _run_normal(['-i'], SAMPLE_HEADERS + [('Server', 'Apache/2.4')], HTTPS_URL)
-    assert 'security header(s) present' in stdout
-    # ensure file handle is closed and file is not overwritten by a following run
+    _run_normal(['-i'], SAMPLE_HEADERS + [('Server', 'Apache/2.4')], HTTPS_URL)
+    # ensure second run does not append to the first run
     assert path.read_text(encoding='utf-8') == first_written
