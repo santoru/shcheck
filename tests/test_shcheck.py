@@ -456,6 +456,18 @@ def test_output_file_mirrors_stdout(tmp_path):
     assert written == stdout
 
 
+def test_output_file_contains_only_json_with_json_flag(tmp_path):
+    """With -j -o, the output file must hold nothing but a valid JSON document with
+    the scan results, independent of what is printed to stdout."""
+    headers = SAMPLE_HEADERS + [('Server', 'Apache/2.4')]
+    _, written = _run_with_output_file(['-j', '-i'], headers, HTTPS_URL,
+                                       tmp_path / 'out.json')
+    data = json.loads(written)
+    assert list(data) == [HTTPS_URL]
+    assert data[HTTPS_URL]['present']['X-Frame-Options'] == 'DENY'
+    assert data[HTTPS_URL]['information_disclosure'] == {'Server': 'Apache/2.4'}
+
+
 def test_run_without_output_file_leaves_previous_output_file_untouched(tmp_path):
     """A run without -o after a run with -o must not write to the previous run's
     file handle: the second run must succeed and the first file must be unchanged
