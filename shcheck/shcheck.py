@@ -273,7 +273,7 @@ def parse_options():
     parser.add_argument("-a", "--add-header", dest="custom_headers",
                         help="Add headers for the request e.g. 'Header: value'",
                         metavar="HEADER_STRING", action="append")
-    parser.add_argument("-o" , "--output", dest="output_file", default=False,
+    parser.add_argument("-o" , "--output", dest="output_file",
                         help="Save the output to this file",
                         metavar="OUTPUT_FILE")
     parser.add_argument('-d', "--disable-ssl-check", dest="ssldisabled",
